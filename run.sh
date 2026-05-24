@@ -37,8 +37,30 @@ for ext in mbstring bcmath curl pdo_pgsql xml tokenizer openssl fileinfo; do
 done
 
 if [ -n "$MISSING" ]; then
+  echo ""
   echo "[ERROR] PHP extensions kurang:$MISSING"
-  echo "Install dengan: sudo apt install -y$(echo $MISSING | sed 's/ / php8.3-/g; s/^/ php8.3-/')"
+  echo ""
+  echo "--- Diagnostic: lokasi konfigurasi PHP ---"
+  php --ini
+  echo "-------------------------------------------"
+  echo ""
+
+  INI_LOADED=$(php -r 'echo php_ini_loaded_file() ?: "";')
+
+  if [ -z "$INI_LOADED" ]; then
+    echo "[HINT] PHP belum punya php.ini (Loaded Configuration File = none)."
+    echo ""
+    echo "  Install extension dengan apt:"
+    echo "    sudo apt install -y$(echo $MISSING | sed 's/ / php8.3-/g; s/^/ php8.3-/')"
+  else
+    echo "[HINT] php.ini sudah ke-load di: $INI_LOADED"
+    echo ""
+    echo "  Install extension dengan apt:"
+    echo "    sudo apt install -y$(echo $MISSING | sed 's/ / php8.3-/g; s/^/ php8.3-/')"
+    echo ""
+    echo "  Setelah install, restart php-fpm / web server kalau pakai:"
+    echo "    sudo systemctl restart php8.3-fpm"
+  fi
   exit 1
 fi
 

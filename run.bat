@@ -31,8 +31,54 @@ for %%E in (mbstring bcmath curl pdo_pgsql xml tokenizer openssl fileinfo) do (
 )
 
 if not "!MISSING!"=="" (
-    echo [ERROR] PHP extensions kurang: !MISSING!
-    echo Edit php.ini, uncomment extension yang dibutuhkan ^(pdo_pgsql, pgsql, dst.^).
+    echo.
+    echo [ERROR] PHP extensions kurang:!MISSING!
+    echo.
+    echo --- Diagnostic: lokasi konfigurasi PHP ---
+    php --ini
+    echo -------------------------------------------
+    echo.
+
+    REM Deteksi apakah php.ini ke-load
+    set INI_LOADED=
+    for /f "tokens=*" %%i in ('php -r "echo php_ini_loaded_file() ?: '''';"') do set INI_LOADED=%%i
+
+    if "!INI_LOADED!"=="" (
+        echo [HINT] PHP belum punya php.ini ^(Loaded Configuration File = none^).
+        echo.
+        echo   Cara fix:
+        echo   1. Cari folder PHP-mu ^(lihat path di output 'where php' di bawah^).
+        echo   2. Di folder itu, copy 'php.ini-development' jadi 'php.ini':
+        echo        copy php.ini-development php.ini
+        echo   3. Buka php.ini, hapus tanda ; di depan baris-baris berikut:
+        echo        extension_dir = "ext"
+        echo        extension=mbstring
+        echo        extension=bcmath
+        echo        extension=curl
+        echo        extension=pdo_pgsql
+        echo        extension=pgsql
+        echo        extension=fileinfo
+        echo        extension=openssl
+        echo        extension=tokenizer
+        echo        extension=xml
+        echo   4. Save, buka cmd baru, jalankan run.bat lagi.
+        echo.
+        echo   Lokasi PHP-mu:
+        where php
+    ) else (
+        echo [HINT] php.ini sudah ke-load di: !INI_LOADED!
+        echo.
+        echo   Buka file di atas dengan Notepad / editor lain, lalu hapus tanda
+        echo   ; di depan baris extension yang missing^^:
+        for %%E in (!MISSING!) do echo        extension=%%E
+        echo.
+        echo   Catatan tambahan:
+        echo   - Untuk Laragon: edit lewat menu Laragon ^> PHP ^> php.ini, lalu Reload.
+        echo   - Untuk XAMPP: edit C:\xampp\php\php.ini, restart XAMPP.
+        echo   - Pastikan ada baris: extension_dir = "ext"  ^(tanpa ; di depan^)
+        echo   - Setelah save php.ini, BUKA CMD BARU sebelum run.bat lagi.
+    )
+    echo.
     pause
     exit /b 1
 )
