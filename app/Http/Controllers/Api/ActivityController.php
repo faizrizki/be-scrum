@@ -42,9 +42,17 @@ class ActivityController extends Controller
             'message' => $data['message'],
         ]);
 
+        $activity->load('actor:id,name');
+
         return response()->json([
             'success' => true,
-            'data' => $activity,
+            'data' => [
+                'id' => $activity->id,
+                'actorId' => $activity->actor_id,
+                'actorName' => $activity->actor?->name,
+                'message' => $activity->message,
+                'createdAt' => $activity->created_at?->toIso8601String(),
+            ],
         ], 201);
     }
 }
