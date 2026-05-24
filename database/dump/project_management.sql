@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict f4T1edqpSeuCfC2KcMlPfAj5p0DpWxOU9Rb0GPcEfAPuhCKHS84lgJfu1McQVHd
+\restrict WWN7oolyAHn1sRhlN0pCHHkLKpOhhCCGgciS7fbajU09UCKzeaKi0YJIS7ahxxW
 
 -- Dumped from database version 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
 -- Dumped by pg_dump version 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
@@ -22,6 +22,7 @@ ALTER TABLE IF EXISTS ONLY public.tasks DROP CONSTRAINT IF EXISTS tasks_project_
 ALTER TABLE IF EXISTS ONLY public.tasks DROP CONSTRAINT IF EXISTS tasks_assignee_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.projects DROP CONSTRAINT IF EXISTS projects_owner_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.notifications DROP CONSTRAINT IF EXISTS notifications_user_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.comments DROP CONSTRAINT IF EXISTS comments_task_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.comments DROP CONSTRAINT IF EXISTS comments_project_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.comments DROP CONSTRAINT IF EXISTS comments_author_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.attachments DROP CONSTRAINT IF EXISTS attachments_comment_id_foreign;
@@ -193,7 +194,8 @@ CREATE TABLE public.comments (
     author_id bigint NOT NULL,
     content text NOT NULL,
     created_at timestamp(0) without time zone,
-    updated_at timestamp(0) without time zone
+    updated_at timestamp(0) without time zone,
+    task_id bigint
 );
 
 
@@ -628,9 +630,9 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 --
 
 COPY public.activities (id, actor_id, message, created_at, updated_at) FROM stdin;
-1	1	membuat proyek 'Website Redesign'	2026-05-24 11:22:32	2026-05-24 11:22:32
-2	1	menambahkan task 'Setup Analytics'	2026-05-24 11:22:32	2026-05-24 11:22:32
-3	3	mengomentari proyek 'Website Redesign'	2026-05-24 11:22:32	2026-05-24 11:22:32
+1	1	membuat proyek 'Website Redesign'	2026-05-24 17:53:06	2026-05-24 17:53:06
+2	1	menambahkan task 'Setup Analytics'	2026-05-24 17:53:06	2026-05-24 17:53:06
+3	3	mengomentari proyek 'Website Redesign'	2026-05-24 17:53:06	2026-05-24 17:53:06
 \.
 
 
@@ -662,9 +664,9 @@ COPY public.cache_locks (key, owner, expiration) FROM stdin;
 -- Data for Name: comments; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-COPY public.comments (id, project_id, author_id, content, created_at, updated_at) FROM stdin;
-1	1	3	Sudah cek mockup homepage, secara overall sudah oke.	2026-05-24 11:22:32	2026-05-24 11:22:32
-2	1	4	Tolong review bagian analytics ya.	2026-05-24 11:22:32	2026-05-24 11:22:32
+COPY public.comments (id, project_id, author_id, content, created_at, updated_at, task_id) FROM stdin;
+1	1	3	Sudah cek mockup homepage, secara overall sudah oke.	2026-05-24 17:53:06	2026-05-24 17:53:06	\N
+2	1	4	Tolong review bagian analytics ya.	2026-05-24 17:53:06	2026-05-24 17:53:06	\N
 \.
 
 
@@ -708,6 +710,7 @@ COPY public.migrations (id, migration, batch) FROM stdin;
 9	2026_05_24_051535_create_attachments_table	1
 10	2026_05_24_051536_create_notifications_table	1
 11	2026_05_24_051537_create_activities_table	1
+12	2026_05_25_000000_add_task_id_to_comments_table	1
 \.
 
 
@@ -716,8 +719,8 @@ COPY public.migrations (id, migration, batch) FROM stdin;
 --
 
 COPY public.notifications (id, user_id, title, message, kind, read, created_at, updated_at) FROM stdin;
-1	1	Task baru ditugaskan	Anda mendapat task 'Setup Analytics' di proyek Website Redesign	TASK	f	2026-05-24 11:22:32	2026-05-24 11:22:32
-2	1	Komentar baru	Budi Santoso mengomentari proyek Website Redesign	COMMENT	f	2026-05-24 11:22:32	2026-05-24 11:22:32
+1	1	Task baru ditugaskan	Anda mendapat task 'Setup Analytics' di proyek Website Redesign	TASK	f	2026-05-24 17:53:06	2026-05-24 17:53:06
+2	1	Komentar baru	Budi Santoso mengomentari proyek Website Redesign	COMMENT	f	2026-05-24 17:53:06	2026-05-24 17:53:06
 \.
 
 
@@ -734,9 +737,6 @@ COPY public.password_reset_tokens (email, token, created_at) FROM stdin;
 --
 
 COPY public.personal_access_tokens (id, tokenable_type, tokenable_id, name, token, abilities, last_used_at, expires_at, created_at, updated_at) FROM stdin;
-1	App\\Models\\User	2	api-token	fadcf1143aa1ca38302a3b7f029db5e145171f44006b5235752b002ad5385eff	["*"]	\N	\N	2026-05-24 11:25:03	2026-05-24 11:25:03
-2	App\\Models\\User	2	api-token	05aa3d2f538c9de3696627130c0fc9ea1986f270265fa60930da619af0609008	["*"]	\N	\N	2026-05-24 11:26:13	2026-05-24 11:26:13
-3	App\\Models\\User	2	api-token	93f022825aa1ec974925fd3bf5d5233b7e7cd487da6716e8263d77035ee805b7	["*"]	2026-05-24 11:30:38	\N	2026-05-24 11:26:46	2026-05-24 11:30:38
 \.
 
 
@@ -745,11 +745,11 @@ COPY public.personal_access_tokens (id, tokenable_type, tokenable_id, name, toke
 --
 
 COPY public.projects (id, name, description, status, start_date, end_date, progress, owner_id, created_at, updated_at) FROM stdin;
-1	Website Redesign	Redesign perusahaan website dengan UI/UX modern	AKTIF	2026-01-11	2027-03-01	60	1	2026-05-24 11:22:32	2026-05-24 11:22:32
-2	Mobile App Development	Pengembangan aplikasi mobile native untuk iOS & Android	AKTIF	2026-02-01	2026-09-30	35	1	2026-05-24 11:22:32	2026-05-24 11:22:32
-3	Migrasi Database	Migrasi dari MySQL 5.7 ke MySQL 8.0	SELESAI	2025-10-01	2025-12-31	100	1	2026-05-24 11:22:32	2026-05-24 11:22:32
-4	Integrasi Payment Gateway	Integrasi Midtrans untuk pembayaran online	DITUNDA	2026-03-01	2026-06-30	20	1	2026-05-24 11:22:32	2026-05-24 11:22:32
-5	Audit Keamanan Sistem	Audit keamanan menyeluruh untuk OWASP Top 10	AKTIF	2026-04-01	2026-07-31	80	1	2026-05-24 11:22:32	2026-05-24 11:22:32
+1	Website Redesign	Redesign perusahaan website dengan UI/UX modern	AKTIF	2026-01-11	2027-03-01	60	1	2026-05-24 17:53:06	2026-05-24 17:53:06
+2	Mobile App Development	Pengembangan aplikasi mobile native untuk iOS & Android	AKTIF	2026-02-01	2026-09-30	35	1	2026-05-24 17:53:06	2026-05-24 17:53:06
+3	Migrasi Database	Migrasi dari MySQL 5.7 ke MySQL 8.0	SELESAI	2025-10-01	2025-12-31	100	1	2026-05-24 17:53:06	2026-05-24 17:53:06
+4	Integrasi Payment Gateway	Integrasi Midtrans untuk pembayaran online	DITUNDA	2026-03-01	2026-06-30	20	1	2026-05-24 17:53:06	2026-05-24 17:53:06
+5	Audit Keamanan Sistem	Audit keamanan menyeluruh untuk OWASP Top 10	AKTIF	2026-04-01	2026-07-31	80	1	2026-05-24 17:53:06	2026-05-24 17:53:06
 \.
 
 
@@ -766,19 +766,19 @@ COPY public.sessions (id, user_id, ip_address, user_agent, payload, last_activit
 --
 
 COPY public.tasks (id, project_id, title, description, status, priority, progress, deadline, assignee_id, created_at, updated_at) FROM stdin;
-1	1	Setup Analytics	Integrasi Google Analytics dan Tracking Events	IN_PROGRESS	MEDIUM	40	2026-11-15	1	2026-05-24 11:22:32	2026-05-24 11:22:32
-2	1	Design Homepage Mockup	Buat Mockup Design untuk halaman utama Website	DONE	HIGH	100	2026-11-12	3	2026-05-24 11:22:32	2026-05-24 11:22:32
-3	1	Konfigurasi CDN	Setup CloudFlare CDN untuk asset gambar	REVIEW	LOW	80	2026-11-20	1	2026-05-24 11:22:32	2026-05-24 11:22:32
-4	2	Wireframe Mobile	Buat wireframe untuk 10 halaman utama aplikasi	DONE	HIGH	100	2026-03-15	3	2026-05-24 11:22:32	2026-05-24 11:22:32
-5	2	Setup React Native Project	Inisialisasi project dan konfigurasi build	IN_PROGRESS	MEDIUM	50	2026-04-30	1	2026-05-24 11:22:32	2026-05-24 11:22:32
-6	2	API Authentication Mobile	Implementasi login & JWT di mobile app	TODO	HIGH	0	2026-05-15	3	2026-05-24 11:22:32	2026-05-24 11:22:32
-7	3	Backup Database Production	Full backup dengan dump SQL	DONE	HIGH	100	2025-10-15	1	2026-05-24 11:22:32	2026-05-24 11:22:32
-8	3	Test Compatibility Query	Test semua query lama compatible dengan MySQL 8	DONE	MEDIUM	100	2025-11-30	3	2026-05-24 11:22:32	2026-05-24 11:22:32
-9	4	Setup Sandbox Midtrans	Daftar akun sandbox & dapat API key	DONE	MEDIUM	100	2026-03-10	1	2026-05-24 11:22:32	2026-05-24 11:22:32
-10	4	Implementasi Snap Token	Generate snap token di backend untuk transaksi	TODO	HIGH	0	2026-04-15	3	2026-05-24 11:22:32	2026-05-24 11:22:32
-11	5	Penetration Testing	Run automated pen-test dengan OWASP ZAP	DONE	HIGH	100	2026-05-15	1	2026-05-24 11:22:32	2026-05-24 11:22:32
-12	5	Review Auth Flow	Review implementasi Sanctum & session handling	REVIEW	MEDIUM	90	2026-06-30	3	2026-05-24 11:22:32	2026-05-24 11:22:32
-13	5	Fix Vulnerability XSS	Sanitasi input pada form komentar	IN_PROGRESS	HIGH	60	2026-07-15	1	2026-05-24 11:22:32	2026-05-24 11:22:32
+1	1	Setup Analytics	Integrasi Google Analytics dan Tracking Events	IN_PROGRESS	MEDIUM	40	2026-11-15	1	2026-05-24 17:53:06	2026-05-24 17:53:06
+2	1	Design Homepage Mockup	Buat Mockup Design untuk halaman utama Website	DONE	HIGH	100	2026-11-12	3	2026-05-24 17:53:06	2026-05-24 17:53:06
+3	1	Konfigurasi CDN	Setup CloudFlare CDN untuk asset gambar	REVIEW	LOW	80	2026-11-20	1	2026-05-24 17:53:06	2026-05-24 17:53:06
+4	2	Wireframe Mobile	Buat wireframe untuk 10 halaman utama aplikasi	DONE	HIGH	100	2026-03-15	3	2026-05-24 17:53:06	2026-05-24 17:53:06
+5	2	Setup React Native Project	Inisialisasi project dan konfigurasi build	IN_PROGRESS	MEDIUM	50	2026-04-30	1	2026-05-24 17:53:06	2026-05-24 17:53:06
+6	2	API Authentication Mobile	Implementasi login & JWT di mobile app	TODO	HIGH	0	2026-05-15	3	2026-05-24 17:53:06	2026-05-24 17:53:06
+7	3	Backup Database Production	Full backup dengan dump SQL	DONE	HIGH	100	2025-10-15	1	2026-05-24 17:53:06	2026-05-24 17:53:06
+8	3	Test Compatibility Query	Test semua query lama compatible dengan MySQL 8	DONE	MEDIUM	100	2025-11-30	3	2026-05-24 17:53:06	2026-05-24 17:53:06
+9	4	Setup Sandbox Midtrans	Daftar akun sandbox & dapat API key	DONE	MEDIUM	100	2026-03-10	1	2026-05-24 17:53:06	2026-05-24 17:53:06
+10	4	Implementasi Snap Token	Generate snap token di backend untuk transaksi	TODO	HIGH	0	2026-04-15	3	2026-05-24 17:53:06	2026-05-24 17:53:06
+11	5	Penetration Testing	Run automated pen-test dengan OWASP ZAP	DONE	HIGH	100	2026-05-15	1	2026-05-24 17:53:06	2026-05-24 17:53:06
+12	5	Review Auth Flow	Review implementasi Sanctum & session handling	REVIEW	MEDIUM	90	2026-06-30	3	2026-05-24 17:53:06	2026-05-24 17:53:06
+13	5	Fix Vulnerability XSS	Sanitasi input pada form komentar	IN_PROGRESS	HIGH	60	2026-07-15	1	2026-05-24 17:53:06	2026-05-24 17:53:06
 \.
 
 
@@ -787,10 +787,10 @@ COPY public.tasks (id, project_id, title, description, status, priority, progres
 --
 
 COPY public.users (id, name, email, email_verified_at, password, remember_token, created_at, updated_at, role) FROM stdin;
-1	Andi Wijaya	pm@test.com	\N	$2y$12$lbFCQjabyXsnotluBZaHOeV8jNchEUykuELBv1f2PjeSAEvOT6jH2	\N	2026-05-24 11:22:31	2026-05-24 11:22:31	PROJECT_MANAGER
-2	Admin Sistem	admin@test.com	\N	$2y$12$XOP4jV3ZwMwsd0eNtYbC2OooD4hEASv0s9hMhu31i.3Sa.QM55Fi.	\N	2026-05-24 11:22:31	2026-05-24 11:22:31	ADMIN
-3	Budi Santoso	member@test.com	\N	$2y$12$CkU3pGGMfQHpCl2IuClNquM54L55yGhAg/UuT/1mNBgQ4kLskyvtm	\N	2026-05-24 11:22:32	2026-05-24 11:22:32	TEAM_MEMBER
-4	Citra Lestari	client@test.com	\N	$2y$12$MyrdG04ijigjgyuNQDplKe1CluKg2D.lfoP0px8.aua8kT1qjEage	\N	2026-05-24 11:22:32	2026-05-24 11:22:32	CLIENT
+1	Andi Wijaya	pm@test.com	\N	$2y$12$fYRs7xmjnjwAJ/Ravhp3fOBNbOnmLmq7Y3J6E00x.x5TYCeInKLDO	\N	2026-05-24 17:53:06	2026-05-24 17:53:06	PROJECT_MANAGER
+2	Admin Sistem	admin@test.com	\N	$2y$12$9/o09xipFgNS2MszWKtv2eXpYTmKv5RrOuDFObk5gYMzdeTBELpIi	\N	2026-05-24 17:53:06	2026-05-24 17:53:06	ADMIN
+3	Budi Santoso	member@test.com	\N	$2y$12$sPqLw.mzGNss3X1gEZ3be.MAPN1PZZsZ5P/ghSW5j6DiMRYNTnmOC	\N	2026-05-24 17:53:06	2026-05-24 17:53:06	TEAM_MEMBER
+4	Citra Lestari	client@test.com	\N	$2y$12$qcNE6UmDBbhEAzIPjFEtteZPeHaYT27bMDSu4qPwCBq67dwmgNaxW	\N	2026-05-24 17:53:06	2026-05-24 17:53:06	CLIENT
 \.
 
 
@@ -833,7 +833,7 @@ SELECT pg_catalog.setval('public.jobs_id_seq', 1, false);
 -- Name: migrations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.migrations_id_seq', 11, true);
+SELECT pg_catalog.setval('public.migrations_id_seq', 12, true);
 
 
 --
@@ -847,7 +847,7 @@ SELECT pg_catalog.setval('public.notifications_id_seq', 2, true);
 -- Name: personal_access_tokens_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.personal_access_tokens_id_seq', 3, true);
+SELECT pg_catalog.setval('public.personal_access_tokens_id_seq', 1, false);
 
 
 --
@@ -868,7 +868,7 @@ SELECT pg_catalog.setval('public.tasks_id_seq', 13, true);
 -- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.users_id_seq', 5, true);
+SELECT pg_catalog.setval('public.users_id_seq', 4, true);
 
 
 --
@@ -1112,6 +1112,14 @@ ALTER TABLE ONLY public.comments
 
 
 --
+-- Name: comments comments_task_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.comments
+    ADD CONSTRAINT comments_task_id_foreign FOREIGN KEY (task_id) REFERENCES public.tasks(id) ON DELETE CASCADE;
+
+
+--
 -- Name: notifications notifications_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1147,5 +1155,5 @@ ALTER TABLE ONLY public.tasks
 -- PostgreSQL database dump complete
 --
 
-\unrestrict f4T1edqpSeuCfC2KcMlPfAj5p0DpWxOU9Rb0GPcEfAPuhCKHS84lgJfu1McQVHd
+\unrestrict WWN7oolyAHn1sRhlN0pCHHkLKpOhhCCGgciS7fbajU09UCKzeaKi0YJIS7ahxxW
 
