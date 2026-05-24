@@ -19,6 +19,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
+    // Team members (semua authenticated user untuk dropdown assignee)
+    Route::get('/team-members', [UserController::class, 'teamMembers']);
+
     // Users (admin only)
     Route::middleware(EnsureAdmin::class)->group(function () {
         Route::get('/users', [UserController::class, 'index']);

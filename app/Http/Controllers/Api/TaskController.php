@@ -27,7 +27,7 @@ class TaskController extends Controller
             'priority' => 'required|in:LOW,MEDIUM,HIGH',
             'progress' => 'required|integer|min:0|max:100',
             'deadline' => 'required|date',
-            'assigneeId' => 'nullable|exists:users,id',
+            'assigneeId' => 'nullable|integer|exists:users,id',
         ]);
 
         $task = $project->tasks()->create([
@@ -55,7 +55,7 @@ class TaskController extends Controller
             'priority' => 'sometimes|required|in:LOW,MEDIUM,HIGH',
             'progress' => 'sometimes|integer|min:0|max:100',
             'deadline' => 'sometimes|required|date',
-            'assigneeId' => 'nullable|exists:users,id',
+            'assigneeId' => 'nullable|integer|exists:users,id',
         ]);
 
         if (array_key_exists('assigneeId', $data)) {

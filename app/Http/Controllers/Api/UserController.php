@@ -18,6 +18,14 @@ class UserController extends Controller
         ]);
     }
 
+    public function teamMembers(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data' => User::select('id', 'name', 'role')->orderBy('name')->get(),
+        ]);
+    }
+
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
