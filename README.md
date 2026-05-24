@@ -10,20 +10,109 @@ Frontend repo: `../fe-project-management` (Next.js 16 + Tailwind v4).
 
 ### 1. Prasyarat
 
-- **PHP 8.3+** — cek versi: `php --version`
+Yang harus terinstall di mesin:
+
+- **PHP 8.3+** dengan extension: `mbstring`, `bcmath`, `curl`, `xml`, `pgsql`, `pdo_pgsql`, `tokenizer`, `openssl`, `fileinfo`
 - **Composer** — https://getcomposer.org/download/
-- **PostgreSQL 14+** (project ini dites di PostgreSQL 16)
-- **PHP Extensions:** `mbstring`, `bcmath`, `curl`, `xml`, `pgsql`, `pdo_pgsql`, `tokenizer`, `openssl`, `fileinfo`
+- **PostgreSQL 14+** (project ini dites di PostgreSQL 16) — pastikan `psql` CLI ada di PATH
+- **Git** — buat clone repo
 
-Install extension di Ubuntu (kalau belum):
+#### Linux / Ubuntu
+
 ```bash
-sudo apt install -y php8.3-mbstring php8.3-bcmath php8.3-curl php8.3-xml php8.3-pgsql
+# PHP + extensions
+sudo apt install -y php8.3 php8.3-cli php8.3-mbstring php8.3-bcmath \
+                    php8.3-curl php8.3-xml php8.3-pgsql
+
+# Composer
+curl -sS https://getcomposer.org/installer | php && sudo mv composer.phar /usr/local/bin/composer
+
+# PostgreSQL
+sudo apt install -y postgresql postgresql-client
+sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'root';"
+
+# Cek hasil
+php -m | grep -iE "pdo_pgsql|mbstring|bcmath|curl|xml"
+psql --version
 ```
 
-Cek extension yang ada:
-```bash
-php -m | grep -iE "mbstring|bcmath|curl|pdo_pgsql|xml|tokenizer|openssl"
+#### Windows (Step-by-step Detail)
+
+> Catatan: lakukan dari **cmd Administrator** untuk install. Setelah selesai, **restart cmd** supaya PATH ter-refresh sebelum jalankan `run.bat`.
+
+1. **PHP 8.3+**
+
+   Pilih salah satu cara:
+   - **Mudah (recommended):** install **[Laragon](https://laragon.org/download/)** full version. Bundle PHP 8.3 + Composer + PATH-ready, semua extension sudah aktif.
+   - **Manual:** download dari https://windows.php.net/download/ (pilih **VS16 x64 Thread Safe**) → extract ke `C:\php` → tambah `C:\php` ke **System Environment Variables → PATH**.
+
+   Lalu **aktifkan extension** — buka `C:\php\php.ini` (atau `C:\laragon\bin\php\php-8.3.x\php.ini`), hapus tanda `;` di depan baris berikut:
+   ```ini
+   extension=pdo_pgsql
+   extension=pgsql
+   extension=mbstring
+   extension=bcmath
+   extension=curl
+   extension=fileinfo
+   extension=openssl
+   extension=tokenizer
+   ```
+
+   Verify di cmd baru:
+   ```cmd
+   php -v
+   php -m | findstr pgsql
+   ```
+   Harus muncul `pdo_pgsql` dan `pgsql`.
+
+2. **Composer**
+
+   - Sudah include kalau pakai Laragon, skip step ini.
+   - Manual: download https://getcomposer.org/Composer-Setup.exe → install (installer auto-detect PHP).
+
+   Verify:
+   ```cmd
+   composer --version
+   ```
+
+3. **PostgreSQL 16**
+
+   Download dari https://www.postgresql.org/download/windows/ → **EDB installer**.
+
+   Saat installer jalan, perhatikan:
+   - **Password** untuk user `postgres` → **catat** (ini yang dipakai aplikasi)
+   - **Port**: biarkan default `5432`
+   - **Centang `Command Line Tools`** (penting — supaya `psql` ada di PATH)
+
+   Verify:
+   ```cmd
+   psql --version
+   ```
+
+   Kalau `psql` tidak dikenali, tambah manual ke PATH: `C:\Program Files\PostgreSQL\16\bin`, lalu restart cmd.
+
+4. **Git**
+
+   Download https://git-scm.com/download/win → install (semua opsi default OK).
+
+   Verify:
+   ```cmd
+   git --version
+   ```
+
+#### Verify Semua Prasyarat (Windows)
+
+Sebelum lanjut, pastikan semua command di bawah muncul versi-nya (bukan *"is not recognized"*):
+
+```cmd
+php -v
+php -m | findstr pgsql
+composer --version
+psql --version
+git --version
 ```
+
+Kalau salah satu missing → install dulu sebelum jalankan `run.bat`.
 
 ### 2. Setup Database (PostgreSQL)
 
@@ -368,10 +457,46 @@ Penjelasan flag:
 
 ## Common Issues
 
+### Khusus Windows
+
+**`'php' is not recognized as an internal or external command`**
+- PHP belum di-PATH. Kalau pakai Laragon, jalankan dari Laragon's *Terminal* (bukan cmd biasa).
+- Manual: tambah folder PHP (mis. `C:\php`) ke **System Environment Variables → PATH**, lalu **restart cmd**.
+
+**`'psql' is not recognized`**
+- PostgreSQL Command Line Tools tidak ke-install / belum di-PATH.
+- Re-run installer PostgreSQL dan centang *Command Line Tools*, **atau** tambah manual: `C:\Program Files\PostgreSQL\16\bin` ke PATH, lalu restart cmd.
+
+**`'composer' is not recognized`**
+- Install Composer dari https://getcomposer.org/Composer-Setup.exe (auto-detect PHP).
+
+**`Could not open input file: artisan`**
+- Kamu tidak di folder project. `cd` dulu ke `be-project-management` lalu jalankan `run.bat`.
+
+**`extension=pdo_pgsql` tidak aktif walau sudah uncomment di `php.ini`**
+- Pastikan kamu edit `php.ini` yang benar. Cek path-nya: `php --ini` (lihat baris `Loaded Configuration File`).
+- Untuk Laragon, edit via menu **Laragon → PHP → php.ini**, lalu restart Laragon.
+- Pastikan file DLL ada di `ext/`: `php_pdo_pgsql.dll` dan `php_pgsql.dll`.
+
+**Password user `postgres` lupa**
+- Buka **SQL Shell (psql)** dari Start Menu → login pakai password lama (kalau ingat), ganti password:
+  ```sql
+  ALTER USER postgres WITH PASSWORD 'password_baru';
+  ```
+- Atau reset via `pg_hba.conf` (ganti method jadi `trust` sementara) — googling "reset postgres password windows" untuk panduan detail.
+
+**`run.bat` exit langsung tanpa pesan**
+- Buka cmd dulu, lalu **drag `run.bat` ke window cmd** dan tekan Enter. Dengan cara ini, pesan error tidak akan hilang setelah script selesai.
+
+**`UnicodeEncodeError` atau karakter aneh di output**
+- Default cmd Windows pakai code page cp1252. Ganti ke UTF-8: `chcp 65001` sebelum `run.bat`. Atau pakai Windows Terminal (sudah default UTF-8).
+
+### Umum (semua OS)
+
 **"Connection refused" saat connect PostgreSQL**
-- Cek service jalan: `sudo systemctl status postgresql` (Linux)
-- Cek port listen: `ss -tlnp | grep 5432`
-- Default PostgreSQL hanya listen di socket Unix. Pastikan `listen_addresses = 'localhost'` di `postgresql.conf`
+- Cek service jalan: `sudo systemctl status postgresql` (Linux) / `Services.msc` → PostgreSQL → Status (Windows)
+- Cek port listen: `ss -tlnp | grep 5432` (Linux) / `netstat -ano | findstr 5432` (Windows)
+- Default PostgreSQL Linux hanya listen di socket Unix. Pastikan `listen_addresses = 'localhost'` di `postgresql.conf`
 
 **"FATAL: password authentication failed for user 'postgres'"**
 - Salah password. Verify `DB_USERNAME` & `DB_PASSWORD` di `.env`
@@ -383,7 +508,9 @@ Penjelasan flag:
   `psql -h 127.0.0.1 -U postgres` (bukan tanpa `-h`)
 
 **"SQLSTATE[08006] could not find driver"**
-- Extension `pdo_pgsql` belum terinstall. Install: `sudo apt install php8.3-pgsql` lalu restart php-fpm/server
+- Extension `pdo_pgsql` belum terinstall.
+  - Linux: `sudo apt install php8.3-pgsql` lalu restart php-fpm/server
+  - Windows: uncomment `extension=pdo_pgsql` di `php.ini`, lalu restart cmd / Laragon
 
 **Migration fail "relation already exists"**
 - Jalankan `php artisan migrate:fresh --seed` (akan drop semua tabel dulu)
