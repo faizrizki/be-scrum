@@ -33,6 +33,13 @@ class ActivityController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        if (! $request->user()->canComment()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak punya izin membuat aktivitas',
+            ], 403);
+        }
+
         $data = $request->validate([
             'message' => 'required|string',
         ]);

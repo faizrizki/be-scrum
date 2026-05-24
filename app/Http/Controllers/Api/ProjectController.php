@@ -19,6 +19,13 @@ class ProjectController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        if (! $request->user()->canManageProjects()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak punya izin membuat proyek',
+            ], 403);
+        }
+
         $data = $request->validate([
             'name' => 'required|string',
             'description' => 'required|string',
@@ -52,6 +59,13 @@ class ProjectController extends Controller
 
     public function update(Request $request, Project $project): JsonResponse
     {
+        if (! $request->user()->canManageProjects()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak punya izin mengubah proyek',
+            ], 403);
+        }
+
         $data = $request->validate([
             'name' => 'sometimes|required|string',
             'description' => 'sometimes|required|string',
@@ -78,8 +92,15 @@ class ProjectController extends Controller
         ]);
     }
 
-    public function destroy(Project $project): JsonResponse
+    public function destroy(Request $request, Project $project): JsonResponse
     {
+        if (! $request->user()->canManageProjects()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak punya izin menghapus proyek',
+            ], 403);
+        }
+
         $project->delete();
         return response()->json(null, 204);
     }

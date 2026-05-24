@@ -34,6 +34,13 @@ class CommentController extends Controller
 
     public function store(Request $request, Project $project): JsonResponse
     {
+        if (! $request->user()->canComment()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak punya izin membuat komentar',
+            ], 403);
+        }
+
         $data = $request->validate([
             'content' => 'required|string',
             'attachments.*' => 'file|max:10240',

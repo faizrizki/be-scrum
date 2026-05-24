@@ -31,6 +31,26 @@ class User extends Authenticatable
         return $this->role === 'ADMIN';
     }
 
+    public function canManageProjects(): bool
+    {
+        return in_array($this->role, ['ADMIN', 'PROJECT_MANAGER'], true);
+    }
+
+    public function canManageTasks(): bool
+    {
+        return in_array($this->role, ['ADMIN', 'PROJECT_MANAGER'], true);
+    }
+
+    public function canUpdateTaskStatus(): bool
+    {
+        return in_array($this->role, ['ADMIN', 'PROJECT_MANAGER', 'TEAM_MEMBER'], true);
+    }
+
+    public function canComment(): bool
+    {
+        return in_array($this->role, ['ADMIN', 'PROJECT_MANAGER', 'TEAM_MEMBER'], true);
+    }
+
     public function projects(): HasMany
     {
         return $this->hasMany(Project::class, 'owner_id');
