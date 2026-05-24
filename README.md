@@ -122,24 +122,24 @@ Plus 1 proyek "Website Redesign" + 2 task + 2 komentar + 2 notifikasi + 3 log ak
 
 Base URL: `http://localhost:8000/api`
 
-| Method | URL | Auth | FR |
-|---|---|---|---|
-| POST | `/login` | tidak | FR-02 |
-| POST | `/register` | tidak | FR-01 |
-| GET | `/me` | ya | - |
-| POST | `/logout` | ya | - |
-| GET/POST/PUT/DELETE | `/users` | ya (admin) | FR-03 |
-| GET/POST/PUT/DELETE | `/projects` | ya | FR-04..07 |
-| GET/POST | `/projects/{id}/tasks` | ya | FR-08..12 |
-| PUT/DELETE | `/tasks/{id}` | ya | FR-10..12 |
-| GET/POST | `/projects/{id}/comments` | ya | FR-13, 14 |
-| DELETE | `/comments/{id}` | ya | - |
-| GET | `/notifications` | ya | FR-15 |
-| PATCH | `/notifications/{id}/read` | ya | FR-15 |
-| PATCH | `/notifications/read-all` | ya | FR-15 |
-| GET/POST | `/activities` | ya | FR-18 |
+| Method | URL | Auth |
+|---|---|---|
+| POST | `/login` | tidak |
+| POST | `/register` | tidak |
+| GET | `/me` | ya |
+| POST | `/logout` | ya |
+| GET/POST/PUT/DELETE | `/users` | ya (admin) |
+| GET/POST/PUT/DELETE | `/projects` | ya |
+| GET/POST | `/projects/{id}/tasks` | ya |
+| PUT/DELETE | `/tasks/{id}` | ya |
+| GET/POST | `/projects/{id}/comments` | ya |
+| DELETE | `/comments/{id}` | ya |
+| GET | `/notifications` | ya |
+| PATCH | `/notifications/{id}/read` | ya |
+| PATCH | `/notifications/read-all` | ya |
+| GET/POST | `/activities` | ya |
 
-Detail request/response: lihat `../TA-Project-Management/docs/API.md` di repo frontend.
+Detail request/response per endpoint bisa dilihat via Postman Collection (lihat section di bawah).
 
 ---
 
@@ -269,39 +269,6 @@ Token didapat dari response `POST /api/login` di field `data.token`. Token tidak
 
 ---
 
-## Connect ke Frontend
-
-Di frontend (`../TA-Project-Management`):
-
-1. Copy env:
-   ```bash
-   cd ../TA-Project-Management
-   cp .env.example .env.local
-   ```
-
-2. Edit `.env.local`:
-   ```
-   NEXT_PUBLIC_API_URL=http://localhost:8000/api
-   ```
-
-3. Jalankan frontend:
-   ```bash
-   npm run dev
-   ```
-
-4. Aktifkan block `TODO` di handler komponen frontend (sudah ada sample API call commented). Lokasi:
-   - `src/modules/auth/components/LoginForm.tsx`
-   - `src/modules/auth/components/RegisterForm.tsx`
-   - `src/modules/project/components/ProjectList.tsx`
-   - `src/modules/project/components/ProjectDetail.tsx`
-   - `src/modules/comment/components/CommentList.tsx`
-   - `src/modules/user/components/UserList.tsx`
-   - `src/modules/notification/components/NotificationModal.tsx`
-
-Frontend axios client (`src/lib/axios.ts`) sudah auto-attach Bearer token dari cookie `token` dan auto-redirect ke `/auth/login` kalau dapat HTTP 401.
-
----
-
 ## Struktur Folder
 
 ```
@@ -416,31 +383,6 @@ Edit header comment di file kalau perlu (info credentials demo, jumlah row, dll)
 | Database | MySQL 8 (via PDO) |
 | PHP | 8.3+ |
 | Manager | Composer |
-
----
-
-## Coverage FR (Functional Requirements)
-
-| FR | Fitur | Endpoint |
-|---|---|---|
-| FR-01 | Registrasi | `POST /register` |
-| FR-02 | Login | `POST /login` |
-| FR-03 | Manajemen Role | `GET/POST/PUT/DELETE /users` (admin) |
-| FR-04 | Buat Proyek | `POST /projects` |
-| FR-05 | Edit Proyek | `PUT /projects/{id}` |
-| FR-06 | Hapus Proyek | `DELETE /projects/{id}` |
-| FR-07 | List Proyek | `GET /projects` |
-| FR-08 | Buat Task | `POST /projects/{id}/tasks` |
-| FR-09 | Penanggung Jawab | field `assigneeId` di task |
-| FR-10 | Status Task | `PUT /tasks/{id}` (field `status`) |
-| FR-11 | Prioritas Task | `PUT /tasks/{id}` (field `priority`) |
-| FR-12 | Deadline Task | `PUT /tasks/{id}` (field `deadline`) |
-| FR-13 | Komentar | `POST /projects/{id}/comments` |
-| FR-14 | Lampiran | multipart upload di komentar |
-| FR-15 | Notifikasi | `GET /notifications` + `PATCH read` |
-| FR-16 | Dashboard | dihitung di frontend dari `/projects` + `/tasks` |
-| FR-17 | Laporan Progress | `window.print()` di frontend |
-| FR-18 | Riwayat Aktivitas | `GET /activities` |
 
 ---
 
