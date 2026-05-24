@@ -17,7 +17,7 @@ Yang harus terinstall di mesin:
 - **PostgreSQL 14+** (project ini dites di PostgreSQL 16) — pastikan `psql` CLI ada di PATH
 - **Git** — buat clone repo
 
-#### Linux / Ubuntu
+#### Linux / Ubuntu / WSL
 
 ```bash
 # PHP + extensions
