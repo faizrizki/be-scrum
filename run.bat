@@ -24,9 +24,11 @@ for /f "tokens=2 delims= " %%v in ('php -v ^| findstr /B "PHP"') do set PHPVER=%
 echo [OK] PHP %PHPVER%
 
 REM 2. Cek extensions
+REM Pakai /X /C: (exact line match, literal string) — lebih reliable
+REM daripada regex /R "^foo$" di Windows findstr (sering miss karena CRLF).
 set MISSING=
 for %%E in (mbstring bcmath curl pdo_pgsql xml tokenizer openssl fileinfo) do (
-    php -m | findstr /I /R "^%%E$" >nul
+    php -m | findstr /I /X /C:"%%E" >nul
     if errorlevel 1 set MISSING=!MISSING! %%E
 )
 
