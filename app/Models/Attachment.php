@@ -24,6 +24,6 @@ class Attachment extends Model
 
     public function getUrlAttribute(): string
     {
-        return Storage::url($this->path);
+        return url(Storage::url($this->path));
     }
 }
