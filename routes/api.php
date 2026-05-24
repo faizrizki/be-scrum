@@ -37,15 +37,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/projects/{project}', [ProjectController::class, 'update']);
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy']);
 
-    // Tasks (nested under project for index/store, flat for update/delete)
+    // Tasks (nested under project for index/store, flat for show/update/delete)
     Route::get('/projects/{project}/tasks', [TaskController::class, 'index']);
     Route::post('/projects/{project}/tasks', [TaskController::class, 'store']);
+    Route::get('/tasks/{task}', [TaskController::class, 'show']);
     Route::put('/tasks/{task}', [TaskController::class, 'update']);
     Route::delete('/tasks/{task}', [TaskController::class, 'destroy']);
 
-    // Comments
+    // Comments (project-level + task-level)
     Route::get('/projects/{project}/comments', [CommentController::class, 'index']);
     Route::post('/projects/{project}/comments', [CommentController::class, 'store']);
+    Route::get('/tasks/{task}/comments', [CommentController::class, 'taskIndex']);
+    Route::post('/tasks/{task}/comments', [CommentController::class, 'taskStore']);
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
 
     // Notifications

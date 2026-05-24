@@ -18,6 +18,16 @@ class TaskController extends Controller
         ]);
     }
 
+    public function show(Task $task): JsonResponse
+    {
+        $task->load(['assignee:id,name', 'project:id,name']);
+
+        return response()->json([
+            'success' => true,
+            'data' => $task,
+        ]);
+    }
+
     public function store(Request $request, Project $project): JsonResponse
     {
         if (! $request->user()->canManageTasks()) {
