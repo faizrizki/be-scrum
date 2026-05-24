@@ -40,8 +40,10 @@ if not "!MISSING!"=="" (
     echo.
 
     REM Deteksi apakah php.ini ke-load
+    REM php_ini_loaded_file() return string path atau false.
+    REM Kalau false, echo-nya empty -> INI_LOADED tetap kosong.
     set INI_LOADED=
-    for /f "tokens=*" %%i in ('php -r "echo php_ini_loaded_file() ?: '''';"') do set INI_LOADED=%%i
+    for /f "tokens=*" %%i in ('php -d display_errors^=0 -r "echo php_ini_loaded_file();" 2^>nul') do set INI_LOADED=%%i
 
     if "!INI_LOADED!"=="" (
         echo [HINT] PHP belum punya php.ini ^(Loaded Configuration File = none^).
