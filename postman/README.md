@@ -1,6 +1,6 @@
 # Postman Collection
 
-Postman collection untuk testing API Project Management.
+Postman collection untuk testing API Project Management (Laravel 12 + Sanctum + PostgreSQL).
 
 ## File
 
@@ -22,7 +22,7 @@ Postman collection untuk testing API Project Management.
    - Pojok kanan atas Postman → dropdown environment → pilih **"Project Management - Local"**
 
 2. **Login dulu untuk dapat token:**
-   - Buka folder **Auth → Login (Admin)** atau **Login (Project Manager)**
+   - Buka folder **Auth → Login (Admin)** atau salah satu role lain
    - Klik **Send**
    - Token otomatis tersimpan ke variable `{{token}}` (lihat console: `Token saved: ...`)
 
@@ -35,56 +35,86 @@ Postman collection untuk testing API Project Management.
    - Edit `project_id`, `task_id`, `user_id`, `comment_id`, `notification_id`
    - Atau edit langsung di environment
 
-## Endpoint Tersedia
+## Endpoint Tersedia (35 total)
 
-### Auth (5)
-- `POST /login` - Login Admin (dengan test script auto-save token)
-- `POST /login` - Login Project Manager
-- `POST /register` - Daftar akun baru
-- `GET /me` - User current
-- `POST /logout` - Logout (revoke token)
+### Auth (7)
+- `POST /login` — Login Admin (dengan test script auto-save token)
+- `POST /login` — Login Project Manager
+- `POST /login` — Login Team Member
+- `POST /login` — Login Client
+- `POST /register` — Daftar akun baru (name auto = prefix email, role = TEAM_MEMBER)
+- `GET /me` — User current
+- `POST /logout` — Logout (revoke token)
+
+### Team Members (1)
+- `GET /team-members` — List ringkas user untuk dropdown assignee (semua role boleh akses)
 
 ### Users / Admin only (4)
-- `GET /users` - List
-- `POST /users` - Create
-- `PUT /users/{id}` - Update
-- `DELETE /users/{id}` - Delete
+- `GET /users` — List
+- `POST /users` — Create
+- `PUT /users/{id}` — Update
+- `DELETE /users/{id}` — Delete
 
 ### Projects (5)
-- `GET /projects` - List
-- `GET /projects/{id}` - Detail
-- `POST /projects` - Create
-- `PUT /projects/{id}` - Update
-- `DELETE /projects/{id}` - Delete
+- `GET /projects` — List
+- `GET /projects/{id}` — Detail
+- `POST /projects` — Create *(PM/Admin only)*
+- `PUT /projects/{id}` — Update *(PM/Admin only)*
+- `DELETE /projects/{id}` — Delete *(PM/Admin only)*
 
-### Tasks (4)
-- `GET /projects/{id}/tasks` - List per project
-- `POST /projects/{id}/tasks` - Create
-- `PUT /tasks/{id}` - Update
-- `DELETE /tasks/{id}` - Delete
+### Tasks (6)
+- `GET /projects/{id}/tasks` — List per project
+- `GET /tasks/{id}` — Detail dengan eager-load assignee & project
+- `POST /projects/{id}/tasks` — Create *(PM/Admin only)*
+- `PUT /tasks/{id}` — Update full *(PM/Admin only)*
+- `PUT /tasks/{id}` — Update status saja *(Member juga boleh — hanya field `status` & `progress`)*
+- `DELETE /tasks/{id}` — Delete *(PM/Admin only)*
 
-### Comments (4)
-- `GET /projects/{id}/comments` - List per project
-- `POST /projects/{id}/comments` - Create (text only)
-- `POST /projects/{id}/comments` - Create with file (multipart)
-- `DELETE /comments/{id}` - Delete
+### Comments (7)
+- `GET /projects/{id}/comments` — List comment project (exclude task-scoped)
+- `POST /projects/{id}/comments` — Create text *(Admin/PM/Member)*
+- `POST /projects/{id}/comments` — Create dengan file (multipart) *(Admin/PM/Member)*
+- `GET /tasks/{id}/comments` — List comment per task
+- `POST /tasks/{id}/comments` — Create text comment di task
+- `POST /tasks/{id}/comments` — Create comment task dengan file
+- `DELETE /comments/{id}` — Delete (hanya author atau admin)
 
 ### Notifications (3)
-- `GET /notifications` - List user current
-- `PATCH /notifications/{id}/read` - Mark single
-- `PATCH /notifications/read-all` - Mark all
+- `GET /notifications` — List user current
+- `PATCH /notifications/{id}/read` — Mark single
+- `PATCH /notifications/read-all` — Mark all
 
 ### Activities (2)
-- `GET /activities?limit=N` - List recent
-- `POST /activities` - Create manual log
+- `GET /activities?limit=N` — List recent
+- `POST /activities` — Create manual log *(non-Client)*
 
-Total: **27 request** terbagi 7 folder.
+## Authorization Matrix
+
+| Aksi | Admin | PM | Member | Client |
+|---|:-:|:-:|:-:|:-:|
+| Lihat semua (GET) | ✅ | ✅ | ✅ | ✅ |
+| Project CRUD | ✅ | ✅ | ❌ | ❌ |
+| Task CRUD penuh | ✅ | ✅ | ❌ | ❌ |
+| Update status/progress task | ✅ | ✅ | ✅ | ❌ |
+| Comment | ✅ | ✅ | ✅ | ❌ |
+| User CRUD | ✅ | ❌ | ❌ | ❌ |
+
+> BE return **HTTP 403** kalau client/member coba akses endpoint yang tidak diizinkan.
+
+## Akun Demo
+
+| Role | Email | Password |
+|---|---|---|
+| ADMIN | `admin@test.com` | `admin123` |
+| PROJECT_MANAGER | `pm@test.com` | `pm123456` |
+| TEAM_MEMBER | `member@test.com` | `member123` |
+| CLIENT | `client@test.com` | `client123` |
 
 ## Tips
 
 **Auto-save token tanpa copy-paste**
 
-Request `Auth → Login (Admin)` punya script di tab **Tests** yang otomatis simpan token ke variable. Tinggal klik Send sekali, lalu pakai endpoint lain langsung.
+Setiap request `Auth → Login (*)` punya script di tab **Tests** yang otomatis simpan token ke variable. Tinggal klik Send sekali, lalu pakai endpoint lain langsung.
 
 **Test alur lengkap**
 
@@ -92,21 +122,31 @@ Urutan rekomendasi pertama kali:
 1. Login Admin
 2. List Projects → catat `id` salah satu project
 3. Edit collection variable `project_id` dengan id project tsb
-4. List Tasks (per Project)
-5. Create Task
-6. List Comments
-7. Create Comment with attachment (pilih file di field `attachments[]`)
+4. List Tasks (per Project) → catat `task_id`
+5. Get Task Detail (endpoint baru `GET /tasks/{id}`)
+6. List Comments (per Task) → cek comment khusus task
+7. Create Task Comment with attachment (pilih file di field `attachments[]`)
 8. Mark Notification as Read
 
-**Test role-based access**
+**Test role-based access (Authorization)**
 
-1. Login sebagai **Project Manager** (`pm@test.com`)
-2. Coba `Users → List Users` → harus dapat **HTTP 403** (hanya admin)
-3. Login sebagai **Admin** → coba lagi → harus sukses
+1. Login sebagai **Team Member** (`Auth → Login (Team Member)`)
+2. Coba `Tasks → Update Task (full)` → **HTTP 403** dengan `forbidden_fields`
+3. Coba `Tasks → Update Task Status (Member friendly)` → **HTTP 200** sukses
+4. Coba `Comments → Create Task Comment` → sukses
+5. Logout, login sebagai **Client** (`Auth → Login (Client)`)
+6. Coba `Projects → Create Project` → **HTTP 403**
+7. Coba `Comments → Create Task Comment` → **HTTP 403**
+
+**Test team-members untuk assignee**
+
+1. Login (siapa saja)
+2. `Team Members → List Team Members` → response berisi `[{id, name, role}]`
+3. Pakai salah satu `id` di body **Create Task** field `assigneeId`
 
 **Upload file**
 
-Di request **Create Comment (with file attachment)**:
+Di request **Create Comment (with file attachment)** atau **Create Task Comment (with file attachment)**:
 - Klik tab **Body** → form-data
 - Field `attachments[]` → klik dropdown Type → pilih **File** → klik **Select Files**
 - Bisa multi-file dengan ulangi field `attachments[]`

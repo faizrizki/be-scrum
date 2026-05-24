@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Project Management API",
-    "description": "REST API untuk aplikasi Project Management (Laravel + Sanctum + MySQL).\n\nBase URL diatur via variable `{{base_url}}` (default: http://localhost:8000/api).\n\n**Cara pakai:**\n1. Import collection ini ke Postman\n2. Import environment `project-management.postman_environment.json` (optional)\n3. Jalankan request `Auth > Login` - token otomatis tersimpan ke variable `{{token}}`\n4. Endpoint authenticated lainnya otomatis pakai token dari variable\n\n**Akun demo:**\n- admin@test.com / admin123 (ADMIN)\n- pm@test.com / pm123456 (PROJECT_MANAGER)\n- member@test.com / member123 (TEAM_MEMBER)\n- client@test.com / client123 (CLIENT)",
+    "description": "REST API untuk aplikasi Project Management (Laravel 12 + Sanctum + PostgreSQL).\n\nBase URL diatur via variable `{{base_url}}` (default: http://localhost:8000/api).\n\n**Cara pakai:**\n1. Import collection ini ke Postman\n2. Import environment `project-management-local.postman_environment.json` (optional)\n3. Jalankan request `Auth > Login (Admin)` - token otomatis tersimpan ke variable `{{token}}`\n4. Endpoint authenticated lainnya otomatis pakai token dari variable\n\n**Akun demo:**\n- admin@test.com / admin123 (ADMIN) - full access\n- pm@test.com / pm123456 (PROJECT_MANAGER) - semua kecuali manage user\n- member@test.com / member123 (TEAM_MEMBER) - read + update status task + comment\n- client@test.com / client123 (CLIENT) - read-only\n\n**Authorization matrix:**\n| Aksi | Admin | PM | Member | Client |\n|---|:-:|:-:|:-:|:-:|\n| Read semua | YES | YES | YES | YES |\n| Project CRUD | YES | YES | - | - |\n| Task CRUD | YES | YES | - | - |\n| Task status update | YES | YES | YES | - |\n| Comment | YES | YES | YES | - |\n| User CRUD | YES | - | - | - |",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -142,6 +142,90 @@
           }
         },
         {
+          "name": "Login (Team Member)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.data && json.data.token) {",
+                  "        const token = json.data.token;",
+                  "        if (pm.environment.name) {",
+                  "            pm.environment.set('token', token);",
+                  "            console.log('Token saved to ENV:', pm.environment.name, '->', token.substring(0, 30) + '...');",
+                  "        }",
+                  "        pm.collectionVariables.set('token', token);",
+                  "        console.log('Token saved to COLLECTION ->', token.substring(0, 30) + '...');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"member@test.com\",\n  \"password\": \"member123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": ["{{base_url}}"],
+              "path": ["login"]
+            }
+          }
+        },
+        {
+          "name": "Login (Client)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.data && json.data.token) {",
+                  "        const token = json.data.token;",
+                  "        if (pm.environment.name) {",
+                  "            pm.environment.set('token', token);",
+                  "            console.log('Token saved to ENV:', pm.environment.name, '->', token.substring(0, 30) + '...');",
+                  "        }",
+                  "        pm.collectionVariables.set('token', token);",
+                  "        console.log('Token saved to COLLECTION ->', token.substring(0, 30) + '...');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"client@test.com\",\n  \"password\": \"client123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": ["{{base_url}}"],
+              "path": ["login"]
+            }
+          }
+        },
+        {
           "name": "Register",
           "request": {
             "auth": { "type": "noauth" },
@@ -157,7 +241,8 @@
             "url": {
               "raw": "{{base_url}}/register",
               "host": ["{{base_url}}"],
-              "path": ["register"]
+              "path": ["register"],
+              "description": "Self-register. Name auto = prefix email (sebelum @). Role default = TEAM_MEMBER."
             }
           }
         },
@@ -183,6 +268,24 @@
               "host": ["{{base_url}}"],
               "path": ["logout"]
             }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Team Members",
+      "item": [
+        {
+          "name": "List Team Members",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/team-members",
+              "host": ["{{base_url}}"],
+              "path": ["team-members"]
+            },
+            "description": "List user ringan (id, name, role) untuk dropdown assignee task. Accessible semua authenticated user (bukan admin-only)."
           }
         }
       ]
@@ -349,6 +452,19 @@
           }
         },
         {
+          "name": "Get Task Detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/tasks/{{task_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["tasks", "{{task_id}}"]
+            },
+            "description": "Return task dengan eager-load assignee (id, name) dan project (id, name)."
+          }
+        },
+        {
           "name": "Create Task",
           "request": {
             "method": "POST",
@@ -368,7 +484,7 @@
           }
         },
         {
-          "name": "Update Task",
+          "name": "Update Task (full - PM/Admin only)",
           "request": {
             "method": "PUT",
             "header": [
@@ -377,13 +493,34 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"IN_PROGRESS\",\n  \"progress\": 50,\n  \"priority\": \"MEDIUM\"\n}"
+              "raw": "{\n  \"title\": \"Setup Analytics v2\",\n  \"description\": \"Update deskripsi\",\n  \"status\": \"IN_PROGRESS\",\n  \"priority\": \"MEDIUM\",\n  \"progress\": 50,\n  \"deadline\": \"2026-12-01\",\n  \"assigneeId\": 1\n}"
             },
             "url": {
               "raw": "{{base_url}}/tasks/{{task_id}}",
               "host": ["{{base_url}}"],
               "path": ["tasks", "{{task_id}}"]
-            }
+            },
+            "description": "Update full task. PM/Admin only. Member yang coba akses ini -> 403 dengan forbidden_fields."
+          }
+        },
+        {
+          "name": "Update Task Status (Member friendly)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"REVIEW\",\n  \"progress\": 90\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tasks/{{task_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["tasks", "{{task_id}}"]
+            },
+            "description": "Hanya kirim field 'status' atau 'progress' -> accessible Member juga. Field lain (title/description/priority/deadline/assigneeId) hanya boleh untuk PM/Admin."
           }
         },
         {
@@ -463,6 +600,66 @@
           }
         },
         {
+          "name": "List Comments (per Task)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/tasks/{{task_id}}/comments",
+              "host": ["{{base_url}}"],
+              "path": ["tasks", "{{task_id}}", "comments"]
+            },
+            "description": "List komentar khusus task tertentu. Comment task disimpan di table yang sama (comments.task_id NOT NULL)."
+          }
+        },
+        {
+          "name": "Create Task Comment (text only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Komentar di task dari Postman\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tasks/{{task_id}}/comments",
+              "host": ["{{base_url}}"],
+              "path": ["tasks", "{{task_id}}", "comments"]
+            }
+          }
+        },
+        {
+          "name": "Create Task Comment (with file attachment)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "content",
+                  "value": "Komentar task dengan lampiran",
+                  "type": "text"
+                },
+                {
+                  "key": "attachments[]",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/tasks/{{task_id}}/comments",
+              "host": ["{{base_url}}"],
+              "path": ["tasks", "{{task_id}}", "comments"]
+            },
+            "description": "Pilih file di field attachments[] (klik dropdown Type -> File). Bisa multi-file."
+          }
+        },
+        {
           "name": "Delete Comment",
           "request": {
             "method": "DELETE",
@@ -471,7 +668,8 @@
               "raw": "{{base_url}}/comments/{{comment_id}}",
               "host": ["{{base_url}}"],
               "path": ["comments", "{{comment_id}}"]
-            }
+            },
+            "description": "Hanya author atau admin yang bisa hapus comment."
           }
         }
       ]

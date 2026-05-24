@@ -225,24 +225,45 @@ Plus 5 proyek (Website Redesign, Mobile App, Migrasi Database, Payment Gateway, 
 
 Base URL: `http://localhost:8000/api`
 
-| Method | URL | Auth |
-|---|---|---|
-| POST | `/login` | tidak |
-| POST | `/register` | tidak |
-| GET | `/me` | ya |
-| POST | `/logout` | ya |
-| GET/POST/PUT/DELETE | `/users` | ya (admin) |
-| GET/POST/PUT/DELETE | `/projects` | ya |
-| GET/POST | `/projects/{id}/tasks` | ya |
-| PUT/DELETE | `/tasks/{id}` | ya |
-| GET/POST | `/projects/{id}/comments` | ya |
-| DELETE | `/comments/{id}` | ya |
-| GET | `/notifications` | ya |
-| PATCH | `/notifications/{id}/read` | ya |
-| PATCH | `/notifications/read-all` | ya |
-| GET/POST | `/activities` | ya |
+| Method | URL | Auth | Akses |
+|---|---|---|---|
+| POST | `/login` | - | semua |
+| POST | `/register` | - | semua |
+| GET | `/me` | ya | semua role |
+| POST | `/logout` | ya | semua role |
+| GET | `/team-members` | ya | semua role (untuk dropdown assignee) |
+| GET/POST/PUT/DELETE | `/users` | ya | **admin only** |
+| GET | `/projects` | ya | semua role |
+| POST/PUT/DELETE | `/projects` | ya | **admin/PM** |
+| GET | `/projects/{id}/tasks` | ya | semua role |
+| POST | `/projects/{id}/tasks` | ya | **admin/PM** |
+| GET | `/tasks/{id}` | ya | semua role |
+| PUT | `/tasks/{id}` | ya | admin/PM full, member: status & progress only |
+| DELETE | `/tasks/{id}` | ya | **admin/PM** |
+| GET/POST | `/projects/{id}/comments` | ya | GET: semua, POST: non-client |
+| GET/POST | `/tasks/{id}/comments` | ya | GET: semua, POST: non-client |
+| DELETE | `/comments/{id}` | ya | author atau admin |
+| GET | `/notifications` | ya | milik sendiri |
+| PATCH | `/notifications/{id}/read` | ya | milik sendiri |
+| PATCH | `/notifications/read-all` | ya | milik sendiri |
+| GET | `/activities` | ya | semua role |
+| POST | `/activities` | ya | non-client |
 
 Detail request/response per endpoint bisa dilihat via Postman Collection (lihat section di bawah).
+
+### Authorization Matrix
+
+| Aksi | Admin | PM | Member | Client |
+|---|:-:|:-:|:-:|:-:|
+| Lihat semua (GET) | ✅ | ✅ | ✅ | ✅ |
+| Project CRUD | ✅ | ✅ | ❌ | ❌ |
+| Task CRUD penuh | ✅ | ✅ | ❌ | ❌ |
+| Update status/progress task | ✅ | ✅ | ✅ | ❌ |
+| Comment (project / task) | ✅ | ✅ | ✅ | ❌ |
+| Upload attachment | ✅ | ✅ | ✅ | ❌ |
+| User CRUD | ✅ | ❌ | ❌ | ❌ |
+
+Defense-in-depth: BE return **HTTP 403** kalau client/member coba akses endpoint yang tidak diizinkan, walaupun UI di-bypass.
 
 ---
 
