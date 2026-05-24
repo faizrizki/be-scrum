@@ -30,7 +30,7 @@ echo "[OK] PHP $(php -r 'echo PHP_VERSION;')"
 
 # 2. Cek extensions
 MISSING=""
-for ext in mbstring bcmath curl pdo_mysql xml tokenizer openssl fileinfo; do
+for ext in mbstring bcmath curl pdo_pgsql xml tokenizer openssl fileinfo; do
   if ! php -m | grep -qi "^${ext}$"; then
     MISSING="$MISSING $ext"
   fi
@@ -72,9 +72,21 @@ fi
 if [ ! -f ".env" ]; then
   echo "==> Copy .env.example -> .env"
   cp .env.example .env
-  echo "[INFO] Edit .env, sesuaikan DB_USERNAME & DB_PASSWORD dengan MySQL kamu."
-  echo "      Lalu jalankan ./run.sh lagi."
-  exit 0
+  echo ""
+  echo "==> Konfigurasi PostgreSQL credentials (tekan Enter untuk pakai default)"
+  read -r -p "    DB_USERNAME [postgres]: " DB_USERNAME_INPUT
+  read -r -p "    DB_PASSWORD [root]:     " DB_PASSWORD_INPUT
+  DB_USERNAME_INPUT=${DB_USERNAME_INPUT:-postgres}
+  DB_PASSWORD_INPUT=${DB_PASSWORD_INPUT:-root}
+
+  NEW_USER="$DB_USERNAME_INPUT" NEW_PASS="$DB_PASSWORD_INPUT" php -r '
+    $c = file_get_contents(".env");
+    $c = preg_replace("/^DB_USERNAME=.*/m", "DB_USERNAME=" . getenv("NEW_USER"), $c);
+    $c = preg_replace("/^DB_PASSWORD=.*/m", "DB_PASSWORD=" . getenv("NEW_PASS"), $c);
+    file_put_contents(".env", $c);
+  '
+  echo "[OK] .env dibuat dengan user '$DB_USERNAME_INPUT'"
+  echo ""
 fi
 
 # 6. Generate APP_KEY kalau kosong
@@ -84,25 +96,68 @@ if ! grep -q "^APP_KEY=base64:" .env; then
   echo ""
 fi
 
-# 7. Cek koneksi DB & migrate
-echo "==> Test koneksi DB & migrate..."
-if ! php artisan migrate --force 2>&1 | tee /tmp/laravel-migrate.log; then
-  echo ""
-  echo "[ERROR] Migrate gagal. Cek error di atas."
-  echo "Tips:"
-  echo "  - Pastikan database 'project_management' sudah dibuat di MySQL"
-  echo "    mysql -u root -p -e \"CREATE DATABASE project_management CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;\""
-  echo "  - Verify DB_USERNAME & DB_PASSWORD di .env"
-  exit 1
+# 7. Auto-setup PostgreSQL database
+get_env() {
+  grep -E "^${1}=" .env | head -1 | cut -d= -f2- | tr -d '"' | tr -d "'"
+}
+
+DB_HOST=$(get_env DB_HOST)
+DB_PORT=$(get_env DB_PORT)
+DB_DATABASE=$(get_env DB_DATABASE)
+DB_USERNAME=$(get_env DB_USERNAME)
+DB_PASSWORD=$(get_env DB_PASSWORD)
+
+: "${DB_HOST:=127.0.0.1}"
+: "${DB_PORT:=5432}"
+
+IMPORTED_DUMP=0
+
+if command -v psql >/dev/null 2>&1; then
+  echo "==> Cek koneksi PostgreSQL ($DB_USERNAME@$DB_HOST:$DB_PORT)..."
+
+  if ! PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USERNAME" -d postgres -tAc "SELECT 1" >/dev/null 2>&1; then
+    echo "[ERROR] Tidak bisa konek PostgreSQL."
+    echo "  - Pastikan service jalan: sudo systemctl status postgresql"
+    echo "  - Verify DB_USERNAME & DB_PASSWORD di .env"
+    echo "  - Set password user postgres: sudo -u postgres psql -c \"ALTER USER postgres WITH PASSWORD 'root';\""
+    exit 1
+  fi
+
+  echo "[OK] Konek PostgreSQL"
+
+  DB_EXIST=$(PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USERNAME" -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_DATABASE'")
+  if [ "$DB_EXIST" != "1" ]; then
+    echo "==> Database '$DB_DATABASE' belum ada, membuat..."
+    PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USERNAME" -d postgres -c "CREATE DATABASE \"$DB_DATABASE\";"
+  fi
+
+  USERS_TABLE=$(PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USERNAME" -d "$DB_DATABASE" -tAc "SELECT to_regclass('public.users')" 2>/dev/null)
+  if [ -z "$USERS_TABLE" ] && [ -f "database/dump/project_management.sql" ]; then
+    echo "==> Database fresh, import dari database/dump/project_management.sql..."
+    PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USERNAME" -d "$DB_DATABASE" -v ON_ERROR_STOP=1 -q -f database/dump/project_management.sql
+    IMPORTED_DUMP=1
+    echo "[OK] Dump imported (schema + demo data lengkap)"
+  fi
+else
+  echo "[INFO] psql CLI tidak ada, skip auto-create DB. Pastikan database '$DB_DATABASE' sudah ada."
 fi
 
-# 8. Seed kalau belum ada user
-USER_COUNT=$(php artisan tinker --execute='echo App\Models\User::count();' 2>/dev/null | tail -1)
-if [ "$USER_COUNT" = "0" ] || [ -z "$USER_COUNT" ]; then
-  echo ""
-  echo "==> Database kosong, menjalankan seeder..."
-  php artisan db:seed --force
-  echo ""
+# 8. Migrate (skip kalau baru import dump)
+if [ "$IMPORTED_DUMP" -eq 0 ]; then
+  echo "==> Migrate database..."
+  if ! php artisan migrate --force 2>&1 | tee /tmp/laravel-migrate.log; then
+    echo ""
+    echo "[ERROR] Migrate gagal. Cek error di atas."
+    exit 1
+  fi
+
+  USER_COUNT=$(php artisan tinker --execute='echo App\Models\User::count();' 2>/dev/null | tail -1)
+  if [ "$USER_COUNT" = "0" ] || [ -z "$USER_COUNT" ]; then
+    echo ""
+    echo "==> Database kosong, menjalankan seeder..."
+    php artisan db:seed --force
+    echo ""
+  fi
 fi
 
 # 9. Storage link

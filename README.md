@@ -1,8 +1,8 @@
 # Backend Project Management (Laravel)
 
-REST API untuk aplikasi Project Management. Stack: **Laravel 12** + **Sanctum** + **MySQL**.
+REST API untuk aplikasi Project Management. Stack: **Laravel 12** + **Sanctum** + **PostgreSQL**.
 
-Frontend repo: `../TA-Project-Management` (Next.js 16 + Tailwind v4).
+Frontend repo: `../fe-project-management` (Next.js 16 + Tailwind v4).
 
 ---
 
@@ -12,47 +12,34 @@ Frontend repo: `../TA-Project-Management` (Next.js 16 + Tailwind v4).
 
 - **PHP 8.3+** — cek versi: `php --version`
 - **Composer** — https://getcomposer.org/download/
-- **MySQL 5.7+ / MariaDB 10.3+**
-- **PHP Extensions:** `mbstring`, `bcmath`, `curl`, `xml`, `mysql`, `pdo_mysql`, `tokenizer`, `openssl`, `fileinfo`
+- **PostgreSQL 14+** (project ini dites di PostgreSQL 16)
+- **PHP Extensions:** `mbstring`, `bcmath`, `curl`, `xml`, `pgsql`, `pdo_pgsql`, `tokenizer`, `openssl`, `fileinfo`
 
 Install extension di Ubuntu (kalau belum):
 ```bash
-sudo apt install -y php8.3-mbstring php8.3-bcmath php8.3-curl php8.3-xml php8.3-mysql
+sudo apt install -y php8.3-mbstring php8.3-bcmath php8.3-curl php8.3-xml php8.3-pgsql
 ```
 
 Cek extension yang ada:
 ```bash
-php -m | grep -iE "mbstring|bcmath|curl|pdo_mysql|xml|tokenizer|openssl"
+php -m | grep -iE "mbstring|bcmath|curl|pdo_pgsql|xml|tokenizer|openssl"
 ```
 
-### 2. Setup Database (MySQL)
+### 2. Setup Database (PostgreSQL)
 
-**Pilih salah satu cara:**
-
-#### A. Pakai `php artisan migrate --seed` (Recommended)
-
-Buat database kosong dulu:
+Pastikan **service PostgreSQL jalan**:
 ```bash
-mysql -u root -p -e "CREATE DATABASE project_management CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+sudo systemctl status postgresql        # Linux
+# Windows: cek PostgreSQL service di Services.msc atau lewat pgAdmin
 ```
 
-Nanti `run.sh` / `run.bat` (atau `php artisan migrate --seed` manual) yang isi schema + data.
+Database `project_management` **tidak perlu dibuat manual** — `run.sh` / `run.bat` akan otomatis:
+1. Cek koneksi PostgreSQL pakai kredensial dari `.env`
+2. Buat database kalau belum ada
+3. **Import langsung dari `database/dump/project_management.sql`** (schema + 4 user + 5 project + 13 task + dst.) kalau DB masih kosong
+4. Atau jalankan `migrate --seed` kalau `psql` CLI tidak tersedia
 
-#### B. Import SQL Dump Langsung (Lebih Cepat)
-
-Sudah ada dump siap pakai di `database/dump/project_management.sql` (schema + demo data lengkap):
-
-```bash
-# 1. Buat database
-mysql -u root -p -e "CREATE DATABASE project_management CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-
-# 2. Import dump
-mysql -u root -p project_management < database/dump/project_management.sql
-```
-
-Selesai — semua tabel + data demo (4 user, 1 project, 2 task, dll) langsung ada. Skip step `php artisan migrate --seed`.
-
-> Tips: kalau pakai XAMPP/Laragon/MAMP, bisa import via phpMyAdmin → Import → upload file `project_management.sql`.
+> Syarat agar auto-setup jalan: `psql` CLI ada di PATH. Sudah default di Ubuntu (`apt install postgresql-client`) maupun installer resmi Windows (centang opsi *Command Line Tools*).
 
 ### 3. Install & Run
 
@@ -66,13 +53,40 @@ Selesai — semua tabel + data demo (4 user, 1 project, 2 task, dll) langsung ad
 run.bat
 ```
 
+#### Konfigurasi Kredensial PostgreSQL (Interaktif)
+
+Saat pertama dijalankan, script akan **prompt kredensial PostgreSQL**:
+
+```
+==> Konfigurasi PostgreSQL credentials (tekan Enter untuk pakai default)
+    DB_USERNAME [postgres]: <Enter atau ketik user kamu>
+    DB_PASSWORD [root]:     <Enter atau ketik password kamu>
+```
+
+- **Default** (`postgres` / `root`) → tekan **Enter dua kali**, langsung jalan.
+- **Kredensial beda** → ketik user & password kamu, lalu Enter. Script otomatis tulis ke `.env`, tidak perlu edit manual.
+
+> Belum punya password untuk user `postgres`? Set dulu (sekali setup):
+> ```bash
+> sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'password_kamu';"
+> ```
+>
+> Pada Windows installer PostgreSQL, password user `postgres` sudah di-set saat install — pakai password itu.
+
+Setelah prompt diisi, script lanjut otomatis: konek ke PostgreSQL → buat DB → import dump → start server di `http://localhost:8000`.
+
+> Mau ubah kredensial setelahnya? Edit langsung `.env` di bagian `DB_USERNAME` & `DB_PASSWORD`, lalu jalankan ulang `run.sh` / `run.bat`. Prompt hanya muncul saat `.env` belum ada.
+
 **Manual (semua OS):**
 ```bash
 cp .env.example .env
-# edit .env, sesuaikan DB credentials
-php -r "echo getenv('PHP_INI_SCAN_DIR');" # verify
+# edit .env, sesuaikan DB_USERNAME & DB_PASSWORD
 composer install
 php artisan key:generate
+# pilih salah satu:
+psql -h 127.0.0.1 -U postgres -c "CREATE DATABASE project_management;"
+psql -h 127.0.0.1 -U postgres -d project_management -f database/dump/project_management.sql
+# atau:
 php artisan migrate --seed
 php artisan storage:link
 php artisan serve
@@ -84,18 +98,18 @@ API jalan di **http://localhost:8000**.
 
 ## Konfigurasi `.env`
 
-Edit `.env` sesuai MySQL setup kamu. Bagian penting:
+Edit `.env` sesuai PostgreSQL setup kamu. Bagian penting:
 
 ```ini
 APP_NAME="Project Management API"
 APP_URL=http://localhost:8000
 
-DB_CONNECTION=mysql
+DB_CONNECTION=pgsql
 DB_HOST=127.0.0.1
-DB_PORT=3306
+DB_PORT=5432
 DB_DATABASE=project_management
-DB_USERNAME=root        # ganti sesuai user MySQL kamu
-DB_PASSWORD=            # ganti sesuai password MySQL kamu
+DB_USERNAME=postgres        # ganti sesuai user PostgreSQL kamu
+DB_PASSWORD=root            # ganti sesuai password PostgreSQL kamu
 
 # Sanctum (default sudah cukup, ubah kalau frontend di port lain)
 SANCTUM_STATEFUL_DOMAINS=localhost:3000,127.0.0.1:3000
@@ -114,7 +128,7 @@ Setelah `php artisan migrate --seed` jalan, ada 4 akun siap pakai:
 | Team Member | `member@test.com` | `member123` |
 | Client | `client@test.com` | `client123` |
 
-Plus 1 proyek "Website Redesign" + 2 task + 2 komentar + 2 notifikasi + 3 log aktivitas.
+Plus 5 proyek (Website Redesign, Mobile App, Migrasi Database, Payment Gateway, Audit Keamanan) + 13 task + 2 komentar + 2 notifikasi + 3 log aktivitas.
 
 ---
 
@@ -295,6 +309,8 @@ app/
 
 database/
 ├── migrations/                 # Schema (7 tabel + Sanctum + Laravel base)
+├── dump/
+│   └── project_management.sql  # pg_dump (schema + seed data)
 └── seeders/
     └── DatabaseSeeder.php      # Demo data
 
@@ -303,6 +319,7 @@ routes/
 
 config/
 ├── cors.php                    # CORS settings (default: allow all)
+├── database.php                # Default connection: pgsql
 └── sanctum.php                 # Sanctum config
 ```
 
@@ -318,8 +335,12 @@ Akan drop semua tabel, re-create, dan isi ulang dari `DatabaseSeeder`.
 
 Atau re-import dari SQL dump:
 ```bash
-mysql -u root -p -e "DROP DATABASE IF EXISTS project_management; CREATE DATABASE project_management CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-mysql -u root -p project_management < database/dump/project_management.sql
+PGPASSWORD=root psql -h 127.0.0.1 -U postgres -d postgres \
+  -c "DROP DATABASE IF EXISTS project_management;" \
+  -c "CREATE DATABASE project_management;"
+
+PGPASSWORD=root psql -h 127.0.0.1 -U postgres -d project_management \
+  -f database/dump/project_management.sql
 ```
 
 ---
@@ -332,29 +353,43 @@ Kalau ada perubahan schema/seed dan mau update `database/dump/project_management
 # Pastikan migrate + seed sudah jalan dengan data terbaru
 php artisan migrate:fresh --seed
 
-# Generate dump baru
-mysqldump -u root -p --no-tablespaces --skip-comments --add-drop-table \
-  project_management > database/dump/project_management.sql
+# Generate dump baru (portable, idempotent — bisa di-restore ulang)
+PGPASSWORD=root pg_dump -h 127.0.0.1 -U postgres \
+  --clean --if-exists --no-owner --no-privileges \
+  -d project_management \
+  > database/dump/project_management.sql
 ```
 
-Edit header comment di file kalau perlu (info credentials demo, jumlah row, dll).
+Penjelasan flag:
+- `--clean --if-exists` — generate `DROP TABLE IF EXISTS` di awal, dump bisa di-rerun
+- `--no-owner --no-privileges` — tidak include `OWNER TO postgres` / `GRANT`, portable lintas user
 
 ---
 
 ## Common Issues
 
-**"Connection refused" saat connect MySQL**
-- Cek service jalan: `sudo systemctl status mysql` (Linux) atau buka XAMPP/Laragon GUI
+**"Connection refused" saat connect PostgreSQL**
+- Cek service jalan: `sudo systemctl status postgresql` (Linux)
+- Cek port listen: `ss -tlnp | grep 5432`
+- Default PostgreSQL hanya listen di socket Unix. Pastikan `listen_addresses = 'localhost'` di `postgresql.conf`
 
-**"Access denied for user 'root'@'localhost'"**
+**"FATAL: password authentication failed for user 'postgres'"**
 - Salah password. Verify `DB_USERNAME` & `DB_PASSWORD` di `.env`
-- Atau MySQL root pakai socket auth — coba `sudo mysql` untuk akses, atau set password via `ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';`
+- Set password user `postgres`: `sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'root';"`
+- Pastikan `pg_hba.conf` pakai `md5` / `scram-sha-256` untuk host `127.0.0.1/32`, bukan `peer` only
 
-**"SQLSTATE[HY000] [2002] No such file or directory"**
-- Default Unix socket tidak terdeteksi. Set `DB_HOST=127.0.0.1` (bukan `localhost`) di `.env`
+**"FATAL: Peer authentication failed for user 'postgres'"**
+- Default Ubuntu pakai peer auth via socket. Pakai TCP: set `DB_HOST=127.0.0.1` (bukan `localhost` di .env) dan login lewat host:
+  `psql -h 127.0.0.1 -U postgres` (bukan tanpa `-h`)
 
-**Migration fail "Table already exists"**
+**"SQLSTATE[08006] could not find driver"**
+- Extension `pdo_pgsql` belum terinstall. Install: `sudo apt install php8.3-pgsql` lalu restart php-fpm/server
+
+**Migration fail "relation already exists"**
 - Jalankan `php artisan migrate:fresh --seed` (akan drop semua tabel dulu)
+
+**Migration error "syntax error at or near 'AFTER'"**
+- PostgreSQL tidak support `->after('column')` di Schema builder. Hapus modifier `after()` dari migration
 
 **CORS error di frontend (browser console)**
 - Edit `config/cors.php`, set `allowed_origins` ke `['http://localhost:3000']`
@@ -367,7 +402,7 @@ Edit header comment di file kalau perlu (info credentials demo, jumlah row, dll)
 - Run `composer require laravel/sanctum` lalu `php artisan migrate`
 
 **"php artisan command not found"**
-- Pastikan kamu di folder root project (di mana `artisan` file ada): `cd BE-PROJECT-MANAGEMENT`
+- Pastikan kamu di folder root project (di mana `artisan` file ada): `cd be-project-management`
 
 **Port 8000 sudah dipakai**
 - Pakai port lain: `php artisan serve --port=8001`
@@ -380,7 +415,7 @@ Edit header comment di file kalau perlu (info credentials demo, jumlah row, dll)
 |---|---|
 | Framework | Laravel 12 |
 | Auth | Laravel Sanctum (token-based) |
-| Database | MySQL 8 (via PDO) |
+| Database | PostgreSQL 16 (via PDO) |
 | PHP | 8.3+ |
 | Manager | Composer |
 
