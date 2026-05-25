@@ -242,7 +242,7 @@
               "raw": "{{base_url}}/register",
               "host": ["{{base_url}}"],
               "path": ["register"],
-              "description": "Self-register. Name auto = prefix email (sebelum @). Role default = TEAM_MEMBER."
+              "description": "Self-register. Name auto = prefix email (sebelum @). Role default = CLIENT (read-only)."
             }
           }
         },

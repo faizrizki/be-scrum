@@ -42,7 +42,7 @@ Postman collection untuk testing API Project Management (Laravel 12 + Sanctum + 
 - `POST /login` — Login Project Manager
 - `POST /login` — Login Team Member
 - `POST /login` — Login Client
-- `POST /register` — Daftar akun baru (name auto = prefix email, role = TEAM_MEMBER)
+- `POST /register` — Daftar akun baru (name auto = prefix email, role = CLIENT)
 - `GET /me` — User current
 - `POST /logout` — Logout (revoke token)
 
