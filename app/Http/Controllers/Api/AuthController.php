@@ -54,7 +54,7 @@ class AuthController extends Controller
             'name' => explode('@', $data['email'])[0],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
-            'role' => 'TEAM_MEMBER',
+            'role' => 'CLIENT',
         ]);
 
         return response()->json([
