@@ -26,6 +26,48 @@ class UserController extends Controller
         ]);
     }
 
+    public function teamMembersOverview(): JsonResponse
+    {
+        $users = User::with(['assignedTasks.project:id,name'])
+            ->select('id', 'name', 'role')
+            ->orderBy('name')
+            ->get()
+            ->map(function ($user) {
+                $tasks = $user->assignedTasks;
+
+                $projects = $tasks
+                    ->groupBy('project_id')
+                    ->map(function ($group, $projectId) {
+                        $first = $group->first();
+                        return [
+                            'projectId' => (int) $projectId,
+                            'projectName' => $first->project?->name,
+                            'tasks' => $group->map(fn ($t) => [
+                                'id' => $t->id,
+                                'title' => $t->title,
+                                'status' => $t->status,
+                                'storyPoints' => $t->story_points ?? 0,
+                            ])->values(),
+                        ];
+                    })
+                    ->values();
+
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'role' => $user->role,
+                    'totalProjects' => $projects->count(),
+                    'totalTasks' => $tasks->count(),
+                    'projects' => $projects,
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $users,
+        ]);
+    }
+
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([

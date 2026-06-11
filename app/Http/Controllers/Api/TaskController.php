@@ -42,8 +42,7 @@ class TaskController extends Controller
             'description' => 'required|string',
             'status' => 'required|in:TODO,IN_PROGRESS,REVIEW,DONE',
             'priority' => 'required|in:LOW,MEDIUM,HIGH',
-            'progress' => 'required|integer|min:0|max:100',
-            'deadline' => 'required|date',
+            'storyPoints' => 'required|integer|min:1',
             'assigneeId' => 'nullable|integer|exists:users,id',
         ]);
 
@@ -52,8 +51,7 @@ class TaskController extends Controller
             'description' => $data['description'],
             'status' => $data['status'],
             'priority' => $data['priority'],
-            'progress' => $data['progress'],
-            'deadline' => $data['deadline'],
+            'story_points' => $data['storyPoints'],
             'assignee_id' => $data['assigneeId'] ?? null,
         ]);
 
@@ -74,23 +72,16 @@ class TaskController extends Controller
             ], 403);
         }
 
-        // Member hanya boleh update status & progress (tidak title, deskripsi,
-        // priority, deadline, assignee). PM & Admin bisa update semua field.
+        // Member hanya boleh update status. PM & Admin bisa update semua field.
         if (! $user->canManageTasks()) {
-            $request->merge(
-                collect($request->only(['status', 'progress']))
-                    ->filter(fn ($v) => $v !== null)
-                    ->all()
-            );
-
-            $allowedKeys = ['status', 'progress'];
+            $allowedKeys = ['status'];
             $sent = array_keys($request->all());
             $forbidden = array_diff($sent, $allowedKeys);
 
             if (! empty($forbidden)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Member hanya boleh mengubah status & progress task',
+                    'message' => 'Member hanya boleh mengubah status task',
                     'forbidden_fields' => array_values($forbidden),
                 ], 403);
             }
@@ -101,11 +92,14 @@ class TaskController extends Controller
             'description' => 'sometimes|required|string',
             'status' => 'sometimes|required|in:TODO,IN_PROGRESS,REVIEW,DONE',
             'priority' => 'sometimes|required|in:LOW,MEDIUM,HIGH',
-            'progress' => 'sometimes|integer|min:0|max:100',
-            'deadline' => 'sometimes|required|date',
+            'storyPoints' => 'sometimes|required|integer|min:1',
             'assigneeId' => 'nullable|integer|exists:users,id',
         ]);
 
+        if (array_key_exists('storyPoints', $data)) {
+            $data['story_points'] = $data['storyPoints'];
+            unset($data['storyPoints']);
+        }
         if (array_key_exists('assigneeId', $data)) {
             $data['assignee_id'] = $data['assigneeId'];
             unset($data['assigneeId']);

@@ -2,10 +2,10 @@
 -- PostgreSQL database dump
 --
 
-\restrict WWN7oolyAHn1sRhlN0pCHHkLKpOhhCCGgciS7fbajU09UCKzeaKi0YJIS7ahxxW
+\restrict nLq5YseVkrcGDYFmSya3Gm2iOQVgJvSwcxtb9cd459JcXBjnDJgzB4I2XUeXmUK
 
--- Dumped from database version 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
--- Dumped by pg_dump version 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
+-- Dumped from database version 16.14 (Ubuntu 16.14-0ubuntu0.24.04.1)
+-- Dumped by pg_dump version 16.14 (Ubuntu 16.14-0ubuntu0.24.04.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -482,11 +482,12 @@ CREATE TABLE public.tasks (
     description text NOT NULL,
     status character varying(255) DEFAULT 'TODO'::character varying NOT NULL,
     priority character varying(255) DEFAULT 'MEDIUM'::character varying NOT NULL,
-    progress smallint DEFAULT '0'::smallint NOT NULL,
-    deadline date NOT NULL,
+    progress smallint DEFAULT '0'::smallint,
+    deadline date,
     assignee_id bigint,
     created_at timestamp(0) without time zone,
     updated_at timestamp(0) without time zone,
+    story_points integer DEFAULT 0 NOT NULL,
     CONSTRAINT tasks_priority_check CHECK (((priority)::text = ANY ((ARRAY['LOW'::character varying, 'MEDIUM'::character varying, 'HIGH'::character varying])::text[]))),
     CONSTRAINT tasks_status_check CHECK (((status)::text = ANY ((ARRAY['TODO'::character varying, 'IN_PROGRESS'::character varying, 'REVIEW'::character varying, 'DONE'::character varying])::text[])))
 );
@@ -630,9 +631,9 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 --
 
 COPY public.activities (id, actor_id, message, created_at, updated_at) FROM stdin;
-1	1	membuat proyek 'Website Redesign'	2026-05-24 17:53:06	2026-05-24 17:53:06
-2	1	menambahkan task 'Setup Analytics'	2026-05-24 17:53:06	2026-05-24 17:53:06
-3	3	mengomentari proyek 'Website Redesign'	2026-05-24 17:53:06	2026-05-24 17:53:06
+1	1	membuat proyek 'Website Redesign'	2026-06-11 06:35:15	2026-06-11 06:35:15
+2	1	menambahkan task 'Setup Analytics'	2026-06-11 06:35:15	2026-06-11 06:35:15
+3	3	mengomentari proyek 'Website Redesign'	2026-06-11 06:35:15	2026-06-11 06:35:15
 \.
 
 
@@ -665,8 +666,8 @@ COPY public.cache_locks (key, owner, expiration) FROM stdin;
 --
 
 COPY public.comments (id, project_id, author_id, content, created_at, updated_at, task_id) FROM stdin;
-1	1	3	Sudah cek mockup homepage, secara overall sudah oke.	2026-05-24 17:53:06	2026-05-24 17:53:06	\N
-2	1	4	Tolong review bagian analytics ya.	2026-05-24 17:53:06	2026-05-24 17:53:06	\N
+1	1	3	Sudah cek mockup homepage, secara overall sudah oke.	2026-06-11 06:35:15	2026-06-11 06:35:15	\N
+2	1	4	Tolong review bagian analytics ya.	2026-06-11 06:35:15	2026-06-11 06:35:15	\N
 \.
 
 
@@ -711,6 +712,8 @@ COPY public.migrations (id, migration, batch) FROM stdin;
 10	2026_05_24_051536_create_notifications_table	1
 11	2026_05_24_051537_create_activities_table	1
 12	2026_05_25_000000_add_task_id_to_comments_table	1
+13	2026_05_25_100000_add_story_points_to_tasks_table	1
+14	2026_05_25_100001_make_deadline_progress_nullable_in_tasks	1
 \.
 
 
@@ -719,8 +722,8 @@ COPY public.migrations (id, migration, batch) FROM stdin;
 --
 
 COPY public.notifications (id, user_id, title, message, kind, read, created_at, updated_at) FROM stdin;
-1	1	Task baru ditugaskan	Anda mendapat task 'Setup Analytics' di proyek Website Redesign	TASK	f	2026-05-24 17:53:06	2026-05-24 17:53:06
-2	1	Komentar baru	Budi Santoso mengomentari proyek Website Redesign	COMMENT	f	2026-05-24 17:53:06	2026-05-24 17:53:06
+1	1	Task baru ditugaskan	Anda mendapat task 'Setup Analytics' di proyek Website Redesign	TASK	f	2026-06-11 06:35:15	2026-06-11 06:35:15
+2	1	Komentar baru	Budi Santoso mengomentari proyek Website Redesign	COMMENT	f	2026-06-11 06:35:15	2026-06-11 06:35:15
 \.
 
 
@@ -737,6 +740,9 @@ COPY public.password_reset_tokens (email, token, created_at) FROM stdin;
 --
 
 COPY public.personal_access_tokens (id, tokenable_type, tokenable_id, name, token, abilities, last_used_at, expires_at, created_at, updated_at) FROM stdin;
+1	App\\Models\\User	2	api-token	6dc0b5c66b9971e2ab16e47d3ff527f48a16c509ec8f49728620ba2c32597a8e	["*"]	2026-06-11 06:35:35	\N	2026-06-11 06:35:35	2026-06-11 06:35:35
+2	App\\Models\\User	2	api-token	582969558157662f3ab407b776201470964511310965ae95a325b63403b6f549	["*"]	2026-06-11 06:43:21	\N	2026-06-11 06:43:21	2026-06-11 06:43:21
+3	App\\Models\\User	2	api-token	5ec664215167d9174cc830ca06fcd28c16ad97a5dec284430a40485db367ee43	["*"]	\N	\N	2026-06-11 06:45:38	2026-06-11 06:45:38
 \.
 
 
@@ -745,11 +751,11 @@ COPY public.personal_access_tokens (id, tokenable_type, tokenable_id, name, toke
 --
 
 COPY public.projects (id, name, description, status, start_date, end_date, progress, owner_id, created_at, updated_at) FROM stdin;
-1	Website Redesign	Redesign perusahaan website dengan UI/UX modern	AKTIF	2026-01-11	2027-03-01	60	1	2026-05-24 17:53:06	2026-05-24 17:53:06
-2	Mobile App Development	Pengembangan aplikasi mobile native untuk iOS & Android	AKTIF	2026-02-01	2026-09-30	35	1	2026-05-24 17:53:06	2026-05-24 17:53:06
-3	Migrasi Database	Migrasi dari MySQL 5.7 ke MySQL 8.0	SELESAI	2025-10-01	2025-12-31	100	1	2026-05-24 17:53:06	2026-05-24 17:53:06
-4	Integrasi Payment Gateway	Integrasi Midtrans untuk pembayaran online	DITUNDA	2026-03-01	2026-06-30	20	1	2026-05-24 17:53:06	2026-05-24 17:53:06
-5	Audit Keamanan Sistem	Audit keamanan menyeluruh untuk OWASP Top 10	AKTIF	2026-04-01	2026-07-31	80	1	2026-05-24 17:53:06	2026-05-24 17:53:06
+1	Website Redesign	Redesign perusahaan website dengan UI/UX modern	AKTIF	2026-01-11	2027-03-01	60	1	2026-06-11 06:35:15	2026-06-11 06:35:15
+2	Mobile App Development	Pengembangan aplikasi mobile native untuk iOS & Android	AKTIF	2026-02-01	2026-09-30	35	1	2026-06-11 06:35:15	2026-06-11 06:35:15
+3	Migrasi Database	Migrasi dari MySQL 5.7 ke MySQL 8.0	SELESAI	2025-10-01	2025-12-31	100	1	2026-06-11 06:35:15	2026-06-11 06:35:15
+4	Integrasi Payment Gateway	Integrasi Midtrans untuk pembayaran online	DITUNDA	2026-03-01	2026-06-30	20	1	2026-06-11 06:35:15	2026-06-11 06:35:15
+5	Audit Keamanan Sistem	Audit keamanan menyeluruh untuk OWASP Top 10	AKTIF	2026-04-01	2026-07-31	80	1	2026-06-11 06:35:15	2026-06-11 06:35:15
 \.
 
 
@@ -765,20 +771,20 @@ COPY public.sessions (id, user_id, ip_address, user_agent, payload, last_activit
 -- Data for Name: tasks; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-COPY public.tasks (id, project_id, title, description, status, priority, progress, deadline, assignee_id, created_at, updated_at) FROM stdin;
-1	1	Setup Analytics	Integrasi Google Analytics dan Tracking Events	IN_PROGRESS	MEDIUM	40	2026-11-15	1	2026-05-24 17:53:06	2026-05-24 17:53:06
-2	1	Design Homepage Mockup	Buat Mockup Design untuk halaman utama Website	DONE	HIGH	100	2026-11-12	3	2026-05-24 17:53:06	2026-05-24 17:53:06
-3	1	Konfigurasi CDN	Setup CloudFlare CDN untuk asset gambar	REVIEW	LOW	80	2026-11-20	1	2026-05-24 17:53:06	2026-05-24 17:53:06
-4	2	Wireframe Mobile	Buat wireframe untuk 10 halaman utama aplikasi	DONE	HIGH	100	2026-03-15	3	2026-05-24 17:53:06	2026-05-24 17:53:06
-5	2	Setup React Native Project	Inisialisasi project dan konfigurasi build	IN_PROGRESS	MEDIUM	50	2026-04-30	1	2026-05-24 17:53:06	2026-05-24 17:53:06
-6	2	API Authentication Mobile	Implementasi login & JWT di mobile app	TODO	HIGH	0	2026-05-15	3	2026-05-24 17:53:06	2026-05-24 17:53:06
-7	3	Backup Database Production	Full backup dengan dump SQL	DONE	HIGH	100	2025-10-15	1	2026-05-24 17:53:06	2026-05-24 17:53:06
-8	3	Test Compatibility Query	Test semua query lama compatible dengan MySQL 8	DONE	MEDIUM	100	2025-11-30	3	2026-05-24 17:53:06	2026-05-24 17:53:06
-9	4	Setup Sandbox Midtrans	Daftar akun sandbox & dapat API key	DONE	MEDIUM	100	2026-03-10	1	2026-05-24 17:53:06	2026-05-24 17:53:06
-10	4	Implementasi Snap Token	Generate snap token di backend untuk transaksi	TODO	HIGH	0	2026-04-15	3	2026-05-24 17:53:06	2026-05-24 17:53:06
-11	5	Penetration Testing	Run automated pen-test dengan OWASP ZAP	DONE	HIGH	100	2026-05-15	1	2026-05-24 17:53:06	2026-05-24 17:53:06
-12	5	Review Auth Flow	Review implementasi Sanctum & session handling	REVIEW	MEDIUM	90	2026-06-30	3	2026-05-24 17:53:06	2026-05-24 17:53:06
-13	5	Fix Vulnerability XSS	Sanitasi input pada form komentar	IN_PROGRESS	HIGH	60	2026-07-15	1	2026-05-24 17:53:06	2026-05-24 17:53:06
+COPY public.tasks (id, project_id, title, description, status, priority, progress, deadline, assignee_id, created_at, updated_at, story_points) FROM stdin;
+1	1	Setup Analytics	Integrasi Google Analytics dan Tracking Events	IN_PROGRESS	MEDIUM	40	2026-11-15	1	2026-06-11 06:35:15	2026-06-11 06:35:15	5
+2	1	Design Homepage Mockup	Buat Mockup Design untuk halaman utama Website	DONE	HIGH	100	2026-11-12	3	2026-06-11 06:35:15	2026-06-11 06:35:15	8
+3	1	Konfigurasi CDN	Setup CloudFlare CDN untuk asset gambar	REVIEW	LOW	80	2026-11-20	1	2026-06-11 06:35:15	2026-06-11 06:35:15	3
+4	2	Wireframe Mobile	Buat wireframe untuk 10 halaman utama aplikasi	DONE	HIGH	100	2026-03-15	3	2026-06-11 06:35:15	2026-06-11 06:35:15	8
+5	2	Setup React Native Project	Inisialisasi project dan konfigurasi build	IN_PROGRESS	MEDIUM	50	2026-04-30	1	2026-06-11 06:35:15	2026-06-11 06:35:15	5
+6	2	API Authentication Mobile	Implementasi login & JWT di mobile app	TODO	HIGH	0	2026-05-15	3	2026-06-11 06:35:15	2026-06-11 06:35:15	8
+7	3	Backup Database Production	Full backup dengan dump SQL	DONE	HIGH	100	2025-10-15	1	2026-06-11 06:35:15	2026-06-11 06:35:15	3
+8	3	Test Compatibility Query	Test semua query lama compatible dengan MySQL 8	DONE	MEDIUM	100	2025-11-30	3	2026-06-11 06:35:15	2026-06-11 06:35:15	5
+9	4	Setup Sandbox Midtrans	Daftar akun sandbox & dapat API key	DONE	MEDIUM	100	2026-03-10	1	2026-06-11 06:35:15	2026-06-11 06:35:15	2
+10	4	Implementasi Snap Token	Generate snap token di backend untuk transaksi	TODO	HIGH	0	2026-04-15	3	2026-06-11 06:35:15	2026-06-11 06:35:15	8
+11	5	Penetration Testing	Run automated pen-test dengan OWASP ZAP	DONE	HIGH	100	2026-05-15	1	2026-06-11 06:35:15	2026-06-11 06:35:15	13
+12	5	Review Auth Flow	Review implementasi Sanctum & session handling	REVIEW	MEDIUM	90	2026-06-30	3	2026-06-11 06:35:15	2026-06-11 06:35:15	5
+13	5	Fix Vulnerability XSS	Sanitasi input pada form komentar	IN_PROGRESS	HIGH	60	2026-07-15	1	2026-06-11 06:35:15	2026-06-11 06:35:15	5
 \.
 
 
@@ -787,10 +793,10 @@ COPY public.tasks (id, project_id, title, description, status, priority, progres
 --
 
 COPY public.users (id, name, email, email_verified_at, password, remember_token, created_at, updated_at, role) FROM stdin;
-1	Andi Wijaya	pm@test.com	\N	$2y$12$fYRs7xmjnjwAJ/Ravhp3fOBNbOnmLmq7Y3J6E00x.x5TYCeInKLDO	\N	2026-05-24 17:53:06	2026-05-24 17:53:06	PROJECT_MANAGER
-2	Admin Sistem	admin@test.com	\N	$2y$12$9/o09xipFgNS2MszWKtv2eXpYTmKv5RrOuDFObk5gYMzdeTBELpIi	\N	2026-05-24 17:53:06	2026-05-24 17:53:06	ADMIN
-3	Budi Santoso	member@test.com	\N	$2y$12$sPqLw.mzGNss3X1gEZ3be.MAPN1PZZsZ5P/ghSW5j6DiMRYNTnmOC	\N	2026-05-24 17:53:06	2026-05-24 17:53:06	TEAM_MEMBER
-4	Citra Lestari	client@test.com	\N	$2y$12$qcNE6UmDBbhEAzIPjFEtteZPeHaYT27bMDSu4qPwCBq67dwmgNaxW	\N	2026-05-24 17:53:06	2026-05-24 17:53:06	CLIENT
+1	Andi Wijaya	pm@test.com	\N	$2y$12$mJFn.IahofsdecQ7eF1D.egZNiZC1RkQ8HCUEZXoRh9D66WWSvQjG	\N	2026-06-11 06:35:15	2026-06-11 06:35:15	PROJECT_MANAGER
+2	Admin Sistem	admin@test.com	\N	$2y$12$m1kUTzJ/8zSy2Bu0Pd9cJe7b1mnTXFFAG9hAAU5kWVUXgMcoftPbO	\N	2026-06-11 06:35:15	2026-06-11 06:35:15	ADMIN
+3	Budi Santoso	member@test.com	\N	$2y$12$ib/UkFCwxAgModojtONt9..z1mIBuLkBREmEWICQBca65U.UZGhuC	\N	2026-06-11 06:35:15	2026-06-11 06:35:15	TEAM_MEMBER
+4	Citra Lestari	client@test.com	\N	$2y$12$kXffQB4gkFx6JN7M.3q2o.LiGgdT/lh774Fp4gHI4GErajVnLJtFK	\N	2026-06-11 06:35:15	2026-06-11 06:35:15	CLIENT
 \.
 
 
@@ -833,7 +839,7 @@ SELECT pg_catalog.setval('public.jobs_id_seq', 1, false);
 -- Name: migrations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.migrations_id_seq', 12, true);
+SELECT pg_catalog.setval('public.migrations_id_seq', 14, true);
 
 
 --
@@ -847,7 +853,7 @@ SELECT pg_catalog.setval('public.notifications_id_seq', 2, true);
 -- Name: personal_access_tokens_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.personal_access_tokens_id_seq', 1, false);
+SELECT pg_catalog.setval('public.personal_access_tokens_id_seq', 3, true);
 
 
 --
@@ -1155,5 +1161,5 @@ ALTER TABLE ONLY public.tasks
 -- PostgreSQL database dump complete
 --
 
-\unrestrict WWN7oolyAHn1sRhlN0pCHHkLKpOhhCCGgciS7fbajU09UCKzeaKi0YJIS7ahxxW
+\unrestrict nLq5YseVkrcGDYFmSya3Gm2iOQVgJvSwcxtb9cd459JcXBjnDJgzB4I2XUeXmUK
 

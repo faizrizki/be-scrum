@@ -72,7 +72,6 @@ class ProjectController extends Controller
             'status' => 'sometimes|required|in:AKTIF,DITUNDA,SELESAI',
             'startDate' => 'sometimes|required|date',
             'endDate' => 'sometimes|required|date',
-            'progress' => 'sometimes|integer|min:0|max:100',
         ]);
 
         if (isset($data['startDate'])) {

@@ -17,11 +17,13 @@ class Task extends Model
         'progress',
         'deadline',
         'assignee_id',
+        'story_points',
     ];
 
     protected $casts = [
         'deadline' => 'date',
         'progress' => 'integer',
+        'story_points' => 'integer',
     ];
 
     public function project(): BelongsTo

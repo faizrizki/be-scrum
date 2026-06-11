@@ -65,6 +65,7 @@ class DatabaseSeeder extends Seeder
             'progress' => 40,
             'deadline' => '2026-11-15',
             'assignee_id' => $pm->id,
+            'story_points' => 5,
         ]);
 
         Task::create([
@@ -76,6 +77,7 @@ class DatabaseSeeder extends Seeder
             'progress' => 100,
             'deadline' => '2026-11-12',
             'assignee_id' => $member->id,
+            'story_points' => 8,
         ]);
 
         Task::create([
@@ -87,6 +89,7 @@ class DatabaseSeeder extends Seeder
             'progress' => 80,
             'deadline' => '2026-11-20',
             'assignee_id' => $pm->id,
+            'story_points' => 3,
         ]);
 
         // ===== Additional Projects (untuk visualisasi dashboard) =====
@@ -109,6 +112,7 @@ class DatabaseSeeder extends Seeder
             'progress' => 100,
             'deadline' => '2026-03-15',
             'assignee_id' => $member->id,
+            'story_points' => 8,
         ]);
 
         Task::create([
@@ -120,6 +124,7 @@ class DatabaseSeeder extends Seeder
             'progress' => 50,
             'deadline' => '2026-04-30',
             'assignee_id' => $pm->id,
+            'story_points' => 5,
         ]);
 
         Task::create([
@@ -131,6 +136,7 @@ class DatabaseSeeder extends Seeder
             'progress' => 0,
             'deadline' => '2026-05-15',
             'assignee_id' => $member->id,
+            'story_points' => 8,
         ]);
 
         $project3 = Project::create([
@@ -152,6 +158,7 @@ class DatabaseSeeder extends Seeder
             'progress' => 100,
             'deadline' => '2025-10-15',
             'assignee_id' => $pm->id,
+            'story_points' => 3,
         ]);
 
         Task::create([
@@ -163,6 +170,7 @@ class DatabaseSeeder extends Seeder
             'progress' => 100,
             'deadline' => '2025-11-30',
             'assignee_id' => $member->id,
+            'story_points' => 5,
         ]);
 
         $project4 = Project::create([
@@ -184,6 +192,7 @@ class DatabaseSeeder extends Seeder
             'progress' => 100,
             'deadline' => '2026-03-10',
             'assignee_id' => $pm->id,
+            'story_points' => 2,
         ]);
 
         Task::create([
@@ -195,6 +204,7 @@ class DatabaseSeeder extends Seeder
             'progress' => 0,
             'deadline' => '2026-04-15',
             'assignee_id' => $member->id,
+            'story_points' => 8,
         ]);
 
         $project5 = Project::create([
@@ -216,6 +226,7 @@ class DatabaseSeeder extends Seeder
             'progress' => 100,
             'deadline' => '2026-05-15',
             'assignee_id' => $pm->id,
+            'story_points' => 13,
         ]);
 
         Task::create([
@@ -227,6 +238,7 @@ class DatabaseSeeder extends Seeder
             'progress' => 90,
             'deadline' => '2026-06-30',
             'assignee_id' => $member->id,
+            'story_points' => 5,
         ]);
 
         Task::create([
@@ -238,6 +250,7 @@ class DatabaseSeeder extends Seeder
             'progress' => 60,
             'deadline' => '2026-07-15',
             'assignee_id' => $pm->id,
+            'story_points' => 5,
         ]);
 
         // ===== Comments =====

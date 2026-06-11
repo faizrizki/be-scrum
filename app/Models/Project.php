@@ -21,7 +21,6 @@ class Project extends Model
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
-        'progress' => 'integer',
     ];
 
     public function owner(): BelongsTo
@@ -47,5 +46,19 @@ class Project extends Model
             ->count('assignee_id') ?: 1;
     }
 
-    protected $appends = ['members'];
+    /**
+     * Progress proyek = (sum story_points tasks DONE) / (sum story_points all tasks) * 100
+     * Override column-based 'progress' supaya auto-compute dari story points.
+     */
+    public function getProgressAttribute(): int
+    {
+        $total = (int) $this->tasks()->sum('story_points');
+        if ($total === 0) {
+            return 0;
+        }
+        $done = (int) $this->tasks()->where('status', 'DONE')->sum('story_points');
+        return (int) round(($done / $total) * 100);
+    }
+
+    protected $appends = ['members', 'progress'];
 }
