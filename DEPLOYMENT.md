@@ -413,5 +413,7 @@ Supabase SQL Editor. `ping_count` harus naik tiap hari.
 | Cron jalan tapi 401 | `CRON_SECRET` di Vercel dan di GitHub Secrets tidak sama. |
 | `fe_sendauth: no password supplied` padahal `.env` sudah diisi | `APP_ENV` di `.env` menunjuk ke file env lain (mis. `.env.supabase`) yang `DB_PASSWORD`-nya kosong. Set `APP_ENV=local`. |
 | Data tabel bisa dibaca lewat REST API Supabase | RLS belum aktif — jalankan migration `enable_row_level_security`, lihat langkah 2.6. |
+| Semua request balik **500 dengan body kosong** (`x-powered-by: PHP` ada) | Laravel gagal menulis `bootstrap/cache/packages.php`. Runtime vercel-php memakai `composer install --no-scripts`, jadi `package:discover` tidak jalan saat build dan Laravel membuatnya saat boot ke direktori read-only. Sudah ditangani `api/index.php` yang mengarahkan `APP_PACKAGES_CACHE`/`APP_SERVICES_CACHE` dkk ke `/tmp`. |
+| `/up` dan `/` jalan tapi semua `/api/*` balik **404** | Entrypoint ada di `api/index.php`, jadi Symfony menghitung `baseUrl = /api` dan memotong prefix itu dari path. Sudah ditangani `api/index.php` yang menormalkan `SCRIPT_NAME`/`SCRIPT_FILENAME`. |
 | Build gagal: `No Output Directory named "dist" found` | Vercel mendeteksi repo sebagai project Vite. Sudah ditangani `vercel.json` (`"framework": null` + build/install command kosong + `outputDirectory: public`); pastikan `vercel.json` ikut ter-push. |
 | Project Supabase tetap ke-pause | Cek `ping_count` di query 2.5; kalau tidak naik, cek log Cron Jobs di Vercel dan tab Actions di GitHub. |
