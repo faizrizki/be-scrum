@@ -1,0 +1,15 @@
+/vendor
+/node_modules
+/tests
+/postman
+/storage/logs
+/storage/framework/cache
+/storage/framework/sessions
+/storage/framework/views
+/public/build
+run.bat
+run.sh
+phpunit.xml
+.env
+.env.backup
+.env.production

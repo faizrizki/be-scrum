@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\ActivityController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CommentController;
+use App\Http\Controllers\Api\KeepAliveController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\TaskController;
@@ -13,6 +14,9 @@ use Illuminate\Support\Facades\Route;
 // Public
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
+
+// Keep-alive Supabase (dipanggil cron harian, diproteksi CRON_SECRET)
+Route::get('/keep-alive', KeepAliveController::class);
 
 // Authenticated
 Route::middleware('auth:sanctum')->group(function () {

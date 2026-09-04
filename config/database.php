@@ -59,7 +59,7 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
+            'options' => extension_loaded('pdo_mysql') && class_exists(Mysql::class) ? array_filter([
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
@@ -79,7 +79,7 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
+            'options' => extension_loaded('pdo_mysql') && class_exists(Mysql::class) ? array_filter([
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
@@ -97,6 +97,12 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            // Supabase connection pooler (Supavisor) mode "transaction" di port 6543
+            // tidak mendukung named prepared statement. Set DB_EMULATE_PREPARES=true
+            // saat memakai port 6543 (deploy serverless / Vercel).
+            'options' => extension_loaded('pdo_pgsql') && filter_var(env('DB_EMULATE_PREPARES', false), FILTER_VALIDATE_BOOL) ? [
+                PDO::ATTR_EMULATE_PREPARES => true,
+            ] : [],
         ],
 
         'sqlsrv' => [

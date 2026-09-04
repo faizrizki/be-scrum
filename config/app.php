@@ -97,6 +97,19 @@ return [
 
     'cipher' => 'AES-256-CBC',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Cron / Keep-alive Secret
+    |--------------------------------------------------------------------------
+    |
+    | Dipakai endpoint GET /api/keep-alive supaya cuma cron yang boleh
+    | memanggilnya. Vercel Cron otomatis mengirim header
+    | "Authorization: Bearer <CRON_SECRET>" kalau env CRON_SECRET diisi.
+    |
+    */
+
+    'cron_secret' => env('CRON_SECRET'),
+
     'key' => env('APP_KEY'),
 
     'previous_keys' => [
