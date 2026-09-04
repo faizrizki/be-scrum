@@ -246,6 +246,13 @@ Langkah:
    > Runtime yang dipakai `vercel-php@0.9.0` (PHP 8.5). Jangan turunkan ke
    > `0.7.4` (PHP 8.3): `config/database.php` bawaan Laravel 13 memakai class
    > `Pdo\Mysql` yang baru ada sejak PHP 8.4.
+
+   > Kalau Vercel sudah keliru memilih preset **Vite** (karena repo ini punya
+   > `vite.config.js` + `package.json`), tidak perlu dibetulkan manual —
+   > `vercel.json` sudah meng-override dengan `"framework": null` plus
+   > `buildCommand`/`installCommand` kosong, jadi build Node dilewati. Aset
+   > Vite memang tidak dipakai: backend ini API-only dan route `/`
+   > mengembalikan JSON, bukan view `welcome`.
 3. **Environment Variables** — salin isi file **`.env.production`** (sudah
    berisi nilai final untuk project Supabase ini). Cara cepat: di halaman
    Environment Variables Vercel, paste seluruh isi file, Vercel akan mem-parse
@@ -406,4 +413,5 @@ Supabase SQL Editor. `ping_count` harus naik tiap hari.
 | Cron jalan tapi 401 | `CRON_SECRET` di Vercel dan di GitHub Secrets tidak sama. |
 | `fe_sendauth: no password supplied` padahal `.env` sudah diisi | `APP_ENV` di `.env` menunjuk ke file env lain (mis. `.env.supabase`) yang `DB_PASSWORD`-nya kosong. Set `APP_ENV=local`. |
 | Data tabel bisa dibaca lewat REST API Supabase | RLS belum aktif — jalankan migration `enable_row_level_security`, lihat langkah 2.6. |
+| Build gagal: `No Output Directory named "dist" found` | Vercel mendeteksi repo sebagai project Vite. Sudah ditangani `vercel.json` (`"framework": null` + build/install command kosong + `outputDirectory: public`); pastikan `vercel.json` ikut ter-push. |
 | Project Supabase tetap ke-pause | Cek `ping_count` di query 2.5; kalau tidak naik, cek log Cron Jobs di Vercel dan tab Actions di GitHub. |
